@@ -5,5 +5,12 @@
 #' @import shiny
 #' @noRd
 app_server <- function(input, output, session) {
-  # Your application server logic
+
+  data <- as.data.table(read_parquet("data/signalconso.parquet"))
+  list_tags <- as.data.table(read_parquet("data/list_tags.parquet"))
+
+  colnames(data)
+  data[,.N,]
+
+
 }

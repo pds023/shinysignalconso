@@ -2,16 +2,20 @@ Package: shinySignalConso
 Title: An Amazing Shiny App
 Version: 0.0.0.9000
 Authors@R: 
-    person(given = "firstname",
-           family = "lastname",
-           role = c("aut", "cre"),
-           email = "your@email.com")
+    person("firstname", "lastname", , "your@email.com", role = c("aut", "cre"))
 Description: What the package does (one paragraph).
 License: What license is it under?
 Imports: 
+    arrow,
+    bsicons,
+    bslib,
     config (>= 0.3.2),
+    data.table,
+    DT,
     golem (>= 0.4.1),
-    shiny (>= 1.8.0)
+    highcharter,
+    shiny (>= 1.8.0),
+    shinyWidgets
 Encoding: UTF-8
 LazyData: true
-RoxygenNote: 7.1.1
+RoxygenNote: 7.2.3
