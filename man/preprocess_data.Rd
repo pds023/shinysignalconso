@@ -4,7 +4,7 @@
 \alias{preprocess_data}
 \title{Title}
 \usage{
-preprocess_data(path = "../../data/signalconso.csv")
+preprocess_data(path = "../../raw-data/signalconso.csv")
 }
 \arguments{
 \item{path}{}

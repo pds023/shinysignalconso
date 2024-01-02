@@ -2,7 +2,7 @@
 #'
 #' @param request Internal parameter for `{shiny}`.
 #'     DO NOT REMOVE.
-#' @import shiny bslib highcharter bsicons shinyWidgets arrow DT
+#' @import shiny bslib highcharter bsicons shinyWidgets arrow DT shinycssloaders xts zoo plotly timetk mapview classInt
 #' @noRd
 app_ui <- function(request) {
   tagList(
