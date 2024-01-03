@@ -18,6 +18,7 @@ app_server <- function(input, output, session) {
   data_years <- reactiveVal()
 
   filters_applied <- reactiveVal(FALSE)
+  nb_rating <- reactiveVal(0)
 
   data(as.data.table(read_parquet("data/signalconso.parquet")))
   list_tags <- as.data.table(read_parquet("data/list_tags.parquet"))
