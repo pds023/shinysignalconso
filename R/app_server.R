@@ -6,6 +6,8 @@
 #' @noRd
 app_server <- function(input, output, session) {
 
+  options(warn = -1)
+
   data <- reactiveVal()
   data_filtered <- reactiveVal()
   data_categories <- reactiveVal()
@@ -19,6 +21,61 @@ app_server <- function(input, output, session) {
 
   data(as.data.table(read_parquet("data/signalconso.parquet")))
   list_tags <- as.data.table(read_parquet("data/list_tags.parquet"))
+
+  output$signalconsometh <- renderText({
+    includeMarkdown("inst/app/www/signalconsometh.md")
+  })
+  output$apropos <- renderText({
+    includeMarkdown("inst/app/www/apropos.md")
+  })
+  output$avenir <- renderText({
+    includeMarkdown("inst/app/www/avenir.md")
+  })
+
+  output$ratings <- renderUI(shinyRatings("ratings_click", no_of_stars = 5, default = 5, disabled = FALSE))
+
+
+  observeEvent(input$ratings_click,{
+    if(nb_rating() > 0){
+      if(input$ratings_click >= 4){showModal(modalDialog("Merci pour cette bonne note ! N'hésitez pas à proposer des suggestions :)",
+                                                         easyClose = TRUE,size = "s"))
+      } else if(input$ratings_click >= 2.5){showModal(modalDialog("Merci pour ce retour ! N'hésitez pas à proposer des suggestions pour améliorer l'expérience utilisateur !",
+                                                                  easyClose = TRUE,size = "s"))
+      } else{showModal(modalDialog("Merci pour ce retour, et toutes mes excuses pour l'expérience peu satisfaisante. N'hésitez pas à proposer des suggestions pour améliorer l'expérience utilisateur.",
+                                   easyClose = TRUE,size = "s"))
+      }
+      print(input$ratings_click)
+      write_parquet(as.data.table(cbind(as.Date(Sys.time()),input$ratings_click)),paste0("data/rating_",
+                                                                                         gsub(
+                                                                                           pattern = " ",
+                                                                                           replacement = "-",
+                                                                                           x = gsub(pattern = ":",x = Sys.time(),replacement = "-"))))
+    }
+    nb_rating(nb_rating() + 1)
+  })
+
+  observeEvent(input$suggestions,{
+    showModal(modalDialog(
+      title = "Soumettre une suggestion",
+      textAreaInput(inputId = "suggestion_text",label = "Suggestion :",placeholder = "Merci de décrire votre suggestion"),
+      h5("Merci de ne pas renseigner d'informations personnelles dans ce champ. Les informations soumises sont enregistrées."),
+      footer = tagList(
+        modalButton("Annuler"),
+        actionButton("ok", "Envoyer")),
+      easyClose = TRUE)
+    )
+  })
+  observeEvent(input$ok,{
+    removeModal()
+    show_alert(title = "Merci pour votre suggestion !",type = "success")
+    print(input$suggestion_text)
+    write_parquet(as.data.table(cbind(as.Date(Sys.time()),input$suggestion_text)),paste0("data/suggestion_",
+                                                                                         gsub(
+                                                                                           pattern = " ",
+                                                                                           replacement = "-",
+                                                                                           x = gsub(pattern = ":",x = Sys.time(),replacement = "-"))))
+  })
+
 
 
   observe({
@@ -59,7 +116,7 @@ app_server <- function(input, output, session) {
         updatePickerInput(session = session,inputId = "exploration_filter_sigstate",choices = unique(data_sigstate()[,signalement_traitement]))
         updatePickerInput(session = session,inputId = "exploration_filter_annee",choices = unique(data_years()[,annee]))
 
-        # updatePickerInput(session = session,inputId = "variables_compare",choices = colnames(data()))
+        updatePickerInput(session = session,inputId = "variables_compare",choices = colnames(data()))
       }
     }
   })
@@ -228,6 +285,133 @@ app_server <- function(input, output, session) {
           type = "logarithmic"
         )
     )
+  })
+
+
+  observeEvent(input$variables_compare,{
+    req(input$variables_compare)
+    if(length(input$variables_compare) > 0){
+      updatePickerInput(session = session,inputId = "modalites_compare",choices = c(unique(data()[,get(input$variables_compare)])),
+                        selected = NULL)
+    }
+  })
+
+  observe({
+    req(input$variables_compare)
+    req(input$modalites_compare)
+    req(input$highchart_compare_categories_pct)
+
+    if(!filters_applied()){
+      output$highchart_compare_categories <- renderHighchart(
+        graph_compare(data(),"category",input$variables_compare,input$modalites_compare,input$highchart_compare_categories_pct)
+      )
+    } else{
+      output$highchart_compare_categories <- renderHighchart(
+        graph_compare(data_filtered(),"category",input$variables_compare,input$modalites_compare,input$highchart_compare_categories_pct)
+      )
+    }
+  })
+  observe({
+    req(input$variables_compare)
+    req(input$modalites_compare)
+    req(input$highchart_compare_tags_pct)
+    if(!filters_applied()){
+      output$highchart_compare_tags <- renderHighchart(
+        graph_compare(data(),"tags",input$variables_compare,input$modalites_compare,input$highchart_compare_tags_pct)
+      )
+    } else {
+      output$highchart_compare_tags <- renderHighchart(
+        graph_compare(data_filtered(),"tags",input$variables_compare,input$modalites_compare,input$highchart_compare_tags_pct)
+      )
+    }
+  })
+  observe({
+    req(input$variables_compare)
+    req(input$modalites_compare)
+    req(input$highchart_compare_territoire_pct)
+    if(!filters_applied()){
+      output$highchart_compare_territoire <- renderHighchart(
+        graph_compare(data(),"dep_name",input$variables_compare,input$modalites_compare,input$highchart_compare_territoire_pct)
+      )
+    } else {
+      output$highchart_compare_territoire <- renderHighchart(
+        graph_compare(data_filtered(),"dep_name",input$variables_compare,input$modalites_compare,input$highchart_compare_territoire_pct)
+      )
+    }
+  })
+  observe({
+    req(input$variables_compare)
+    req(input$modalites_compare)
+    req(input$highchart_compare_sigstate_pct)
+    if(!filters_applied()){
+      output$highchart_compare_sigstate <- renderHighchart(
+        graph_compare(data(),"signalement_traitement",input$variables_compare,input$modalites_compare,input$highchart_compare_sigstate_pct)
+      )
+    } else {
+      output$highchart_compare_sigstate <- renderHighchart(
+        graph_compare(data_filtered(),"signalement_traitement",input$variables_compare,input$modalites_compare,input$highchart_compare_sigstate_pct)
+      )
+    }
+  })
+
+
+
+  observe({
+    if(!filters_applied()){
+      output$exploration_donnees_brutes <- renderDT(
+        data()[,.(category,subcategories,date,status,tags,dep_name,reg_name,signalement_traitement)],
+        filter = 'top',
+        fillContainer = TRUE,
+        extensions = c('Responsive'),options = list(
+          pageLength = 15, autoWidth = TRUE,
+          language = list(
+            info = 'Affichage de _START_ à _END_ résultats sur _TOTAL_',
+            paginate = list(previous = 'Précédent', `next` = 'Suivant'),
+            lengthMenu = "Afficher _MENU_ résultats",
+            search = "Recherche"
+          )
+        ))
+    } else{
+      output$exploration_donnees_brutes <- renderDT(
+        data_filtered()[,.(category,subcategories,date,status,tags,dep_name,reg_name,signalement_traitement)],
+        filter = 'top',
+        fillContainer = TRUE,
+        extensions = c('Responsive'),options = list(
+          pageLength = 15, autoWidth = TRUE,
+          language = list(
+            info = 'Affichage de _START_ à _END_ résultats sur _TOTAL_',
+            paginate = list(previous = 'Précédent', `next` = 'Suivant'),
+            lengthMenu = "Afficher _MENU_ résultats",
+            search = "Recherche"
+          )
+        ))
+    }
+  })
+
+  observe({
+    if(!filters_applied()){
+      output$downloadData <- downloadHandler(
+        filename = function() {
+          # Use the selected dataset as the suggested file name
+          "signalconso.csv"
+        },
+        content = function(file) {
+          # Write the dataset to the `file` that will be downloaded
+          write.csv(data(), file)
+        }
+      )
+    } else {
+      output$downloadData <- downloadHandler(
+        filename = function() {
+          # Use the selected dataset as the suggested file name
+          "signalconso_filtered.csv"
+        },
+        content = function(file) {
+          # Write the dataset to the `file` that will be downloaded
+          write.csv(data_filtered(), file)
+        }
+      )
+    }
   })
 
   }

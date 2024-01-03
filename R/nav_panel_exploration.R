@@ -84,7 +84,7 @@ nav_panel_exploration <- function() {
                                     card(card_header("Analyse temporelle",
                                                      tooltip(
                                                        bs_icon("info-circle"),
-                                                       "Tooltip message"
+                                                       "MMn : moyenne mobile d'ordre n"
                                                      )),
                                            card_body(
                                              navset_card_underline(nav_panel(title = "Données brutes",
@@ -98,11 +98,7 @@ nav_panel_exploration <- function() {
                                            )
 
                                     ),
-                                    card(card_header("Analyse spatiale",
-                                                     tooltip(
-                                                       bs_icon("info-circle"),
-                                                       "Tooltip message"
-                                                     )),
+                                    card(card_header("Analyse spatiale"),
                                          card_body(
                                            navset_card_underline(nav_panel(title = "Départements",
                                                                            withSpinner(highchartOutput("exploration_map_dep"))),
@@ -135,13 +131,6 @@ nav_panel_exploration <- function() {
                                         nav_panel(title = "Catégories",
                                                   highchartOutput("highchart_compare_categories"),
                                                   switchInput(
-                                                    inputId = "highchart_compare_categories_treemap",
-                                                    onLabel = "Bars",
-                                                    offLabel = "Treemap",
-                                                    value = TRUE,
-                                                    size = "mini"
-                                                  ),
-                                                  switchInput(
                                                     inputId = "highchart_compare_categories_pct",
                                                     onLabel = "N",
                                                     offLabel = "%",
@@ -151,13 +140,6 @@ nav_panel_exploration <- function() {
                                         nav_panel(title = "Tags",
                                                   highchartOutput("highchart_compare_tags"),
                                                   switchInput(
-                                                    inputId = "highchart_compare_tags_treemap",
-                                                    onLabel = "Bars",
-                                                    offLabel = "Treemap",
-                                                    value = TRUE,
-                                                    size = "mini"
-                                                  ),
-                                                  switchInput(
                                                     inputId = "highchart_compare_tags_pct",
                                                     onLabel = "N",
                                                     offLabel = "%",
@@ -166,13 +148,6 @@ nav_panel_exploration <- function() {
                                                   )),
                                         nav_panel(title = "Territoire",
                                                   highchartOutput("highchart_compare_territoire"),
-                                                  switchInput(
-                                                    inputId = "highchart_compare_territoire_treemap",
-                                                    onLabel = "Bars",
-                                                    offLabel = "Treemap",
-                                                    value = TRUE,
-                                                    size = "mini"
-                                                  ),
                                                   switchInput(
                                                     inputId = "highchart_compare_territoire_pct",
                                                     onLabel = "N",
@@ -184,20 +159,20 @@ nav_panel_exploration <- function() {
                                         nav_panel(title = "État du signalement",
                                                   highchartOutput("highchart_compare_sigstate"),
                                                   switchInput(
-                                                    inputId = "highchart_compare_sigstate_treemap",
-                                                    onLabel = "Bars",
-                                                    offLabel = "Treemap",
-                                                    value = TRUE,
-                                                    size = "mini"
-                                                  ),
-                                                  switchInput(
                                                     inputId = "highchart_compare_sigstate_pct",
                                                     onLabel = "N",
                                                     offLabel = "%",
                                                     value = TRUE,
                                                     size = "mini"
                                                   )))
-                                    ))
+                                    )),
+                          nav_panel("Données brutes",icon = bs_icon("database"),
+                                    card(card_header("Données brutes"),
+                                         card_body(DTOutput("exploration_donnees_brutes"),
+                                                   downloadButton(
+                                                     "downloadData", "Télécharger",
+                                                     class = "btn-primary rounded-0"
+                                                   )))),
               )
     )
   )

@@ -1,10 +1,13 @@
 Package: shinySignalConso
-Title: An Amazing Shiny App
+Title: Shiny Signal Conso
 Version: 0.0.0.9000
 Authors@R: 
-    person("firstname", "lastname", , "your@email.com", role = c("aut", "cre"))
-Description: What the package does (one paragraph).
-License: What license is it under?
+    person("Philippe", "Fontaine", , "philippe.fontaine.ds@proton.me", role = c("cre", "aut"))
+Description: Data visualisation des données de SignalConso disponibles sur
+    data.gouv.
+License: MIT + file LICENSE
+URL: https://github.com/pds023/shinysignalconso
+BugReports: https://github.com/pds023/shinysignalconso/issues
 Imports: 
     arrow,
     bsicons,
@@ -14,10 +17,14 @@ Imports:
     DT,
     golem (>= 0.4.1),
     highcharter,
+    markdown,
     plotly,
+    readxl,
     shiny (>= 1.8.0),
     shinycssloaders,
+    shinyRatings,
     shinyWidgets,
+    timetk,
     xts,
     zoo
 Encoding: UTF-8
