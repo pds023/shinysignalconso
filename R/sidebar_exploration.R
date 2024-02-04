@@ -44,8 +44,8 @@ sidebar_exploration <- function() {
                                             `live-search` = TRUE,
                                             `container` = 'body'), label = "Année",
                                           choices = c("")),
-                              actionButton(inputId = "exploration_filters_apply",label = "Appliquer"),
-                              actionButton(inputId = "exploration_filters_reset",label = "Réinitialiser")
+                              actionButton(inputId = "exploration_filters_apply",label = "Appliquer",width = "100%"),
+                              actionButton(inputId = "exploration_filters_reset",label = "Réinitialiser",width = "100%")
     ))
   })
 }

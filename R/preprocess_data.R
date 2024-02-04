@@ -1,14 +1,15 @@
 
 #' Title
 #'
-#' @param path
+#' @param file
 #'
 #' @return
 #' @export
 #' @import data.table arrow
 #' @examples
-preprocess_data <- function(path = "../../raw-data/signalconso.csv") {
-  data <- as.data.table(read.csv(path, sep = ";"))
+preprocess_data <- function(file = "signalconso.csv") {
+  gc()
+  data <- as.data.table(read.csv(file, sep = ";"))
   data[,id := NULL]
   data[,.N,category]
   data[category %in% "CafeRestaurant", category := "Café/Restaurant"]
@@ -25,23 +26,6 @@ preprocess_data <- function(path = "../../raw-data/signalconso.csv") {
   data[category %in% "VoitureVehicule", category := "Véhicules"]
   data[category %in% "Coronavirus", category := "Coronavirus"]
   data[category %in% "Téléphonie / Internet / médias", category := "Téléphonie/FAI/Médias"]
-
-
-  subcategories <- data[,.N,subcategories]
-  subcategories[, subcategory := strsplit(subcategories, ";")]
-  subcategories_long <- subcategories[, .(subcategory = unlist(subcategory)), by = .(N)]
-  subcategories_long[, subcategory := trimws(subcategory)]
-  subcategories_long <- subcategories_long[subcategory != ""]
-  DT_agg <- subcategories_long[, .(Count = sum(N)), by = subcategory]
-  write_parquet(DT_agg[order(Count,decreasing = TRUE)],"data/list_subcategories.parquet")
-
-  data_tags <- data[,.N,tags]
-  data_tags[, tag := strsplit(tags, ";")]
-  data_tags_long <- data_tags[, .(tag = unlist(tag)), by = .(N)]
-  data_tags_long[, tag := trimws(tag)]
-  data_tags_long <- data_tags_long[tag != ""]
-  DT_agg <- data_tags_long[, .(Count = sum(N)), by = tag]
-  write_parquet(DT_agg,"data/list_tags.parquet")
 
   data[status %in% "ConsulteIgnore",status := "Consulté/Ignoré"]
   data[status %in% "MalAttribue",status := "Mal attribué"]
@@ -68,9 +52,17 @@ preprocess_data <- function(path = "../../raw-data/signalconso.csv") {
     return(x)
   })
 
+  gc()
 
-  maphc <- readxl::read_xlsx("../../usefull-data/table_maphc.xlsx")
+  maphc <- readxl::read_xlsx("data/table_maphc.xlsx")
   data <- merge(data,maphc,by = c("reg_code","dep_code"),all = TRUE)
 
-  write_parquet(data,"data/signalconso.parquet")
+  s3write_using(
+    x = data,
+    FUN = write_parquet,
+    object = "signalconso.parquet",
+    bucket = "awsbucketpf/shinysignalconso"
+  )
+
+  file.remove(file)
 }

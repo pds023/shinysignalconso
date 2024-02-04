@@ -1,0 +1,56 @@
+.value-box-title {
+    font-size: 14px !important; /* ou toute autre taille souhaitée */
+}
+.value-box-value {
+    font-size: 12px !important; /* ou toute autre taille souhaitée */
+}
+
+.buttons-colvis {
+    width: 200px;
+}
+
+.btn-secondary{
+  --bs-btn-bg: #007bc2 !important;
+  margin-top: 10px !important;
+}
+
+      .card-title-container {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+      .title-tooltip {
+        display: flex;
+        gap: 10px;
+        align-items: center;
+      }
+      .radio-group-buttons-container {
+        display: flex;
+        gap: 10px;
+        align-items: center;
+        margin-bottom: 0;
+      }
+
+
+#exploration_filters_apply:hover {
+  background-color: #007bc2; /* change to your desired color */
+  color: white; /* change to your desired color */
+}
+#exploration_filters_reset:hover {
+  background-color: #9f0025; /* change to your desired color */
+  color: white; /* change to your desired color */
+}
+
+#suggestions{
+  font-size: 10px !important; /* ou toute autre taille souhaitée */
+}
+/* Define the hover effect */
+#suggestions:hover {
+  background-color: #007bc2; /* Change background color to blue on hover */
+  transition: background-color 0.5s;
+
+}
+
+.radiobtn:hover{
+  background-color: #007bc2; /* change to your desired color */
+}

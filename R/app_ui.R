@@ -11,6 +11,7 @@ app_ui <- function(request) {
     # Your application UI logic
     page_fluid(
       theme =  bs_theme(),
+      includeCSS("inst/app/www/styles.css"),
       list(tags$head(HTML('<link rel="icon", href="www/logoapp.png",
                                    type="image/png" />')),
            tags$head(
@@ -23,26 +24,23 @@ app_ui <- function(request) {
                 font-family: 'Marianne', sans-serif;
             }
         "))
-           ),
-        tags$head(
-          tags$style(HTML("hr {border-top: 1px solid #000000;}")))),
+           )),
 page_navbar(
-  title=div(img(src="www/logopf.png", style="height:100px; width:100px;margin-bottom: -30px; border-radius: 50%"),
-            img(src="www/logoapp.png", style="height:100px; width:100px;margin-bottom: -30px; margin-right:30px; border-radius: 50%"),
-            ""),
+  title="ShinySignalConso",
   nav_panel_exploration(),
   nav_menu_apropos(),
   nav_spacer(),
-  nav_item(actionBttn("suggestions",label = "Envoyez une suggestion",size = "xs")),
-  nav_menu("Notez-moi",
-           nav_item(uiOutput("ratings"))),
+  nav_item(actionButton(inputId = "suggestions",label = "Une suggestion ?")),
+  nav_item(tags$a(shiny::icon("github"), "ShinySignalConso", href = "https://github.com/pds023/shinysignalconso", target = "_blank")),
+  nav_item(tags$a(shiny::icon("linkedin"), "philippe-fontaine-ds", href = "https://www.linkedin.com/in/philippe-fontaine-ds/", target = "_blank")),
+
   nav_item(input_dark_mode(mode = "light")),
-  tags$style(".footer{position: fixed;bottom: 0;width: 100%;background-color: rgba(8, 60, 116, 1);color: white;text-align: center;padding: 5px;margin-left:-25px;}"),
+  tags$style(".footer{position: fixed;bottom: 0;width: 100%;background-color: rgba(8, 60, 116, 1);color: white;text-align: center;padding: 5px;margin-left:-25px;z-index:100;}"),
   tags$style(".footer a{color: white;}"),
   footer = tags$div(
     class = "footer",
     "Développé par ",
-    tags$a(href = "https://www.linkedin.com/in/philippe-fontaine-ds/", target = "_blank", "Philippe Fontaine"))
+    tags$a(href = "https://www.philippefontaine.eu", target = "_blank", "Philippe Fontaine"))
 )
 
     )
@@ -55,7 +53,7 @@ page_navbar(
 #' This function is internally used to add external
 #' resources inside the Shiny application.
 #'
-#' @import shiny
+#' @import shiny aws.s3
 #' @importFrom golem add_resource_path activate_js favicon bundle_resources
 #' @noRd
 golem_add_external_resources <- function() {

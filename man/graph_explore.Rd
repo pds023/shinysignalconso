@@ -4,7 +4,7 @@
 \alias{graph_explore}
 \title{Title}
 \usage{
-graph_explore(data, input_treemap, input_pct, group = FALSE)
+graph_explore(data, input_type, input_pct, group = FALSE)
 }
 \arguments{
 \item{input_pct}{}

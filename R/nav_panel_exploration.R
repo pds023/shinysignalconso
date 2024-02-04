@@ -13,92 +13,51 @@ nav_panel_exploration <- function() {
                           sidebar = uiOutput("sidebar_exploration"),
                           nav_panel("Vue d'ensemble", icon = bs_icon("clipboard2-data"),
                                     value = "panel_exploration_vuedensemble",
-                                    navset_card_underline(height = "600px",
-                                                          title = "Éléments descriptifs",
-                                                          nav_panel(title = "Catégories",
-                                                                    highchartOutput("highchart_stats_categories"),
-                                                                    switchInput(
-                                                                      inputId = "highchart_stats_categories_treemap",
-                                                                      onLabel = "Bars",
-                                                                      offLabel = "Treemap",
-                                                                      value = TRUE,
-                                                                      size = "mini"
-                                                                    ),
-                                                                    switchInput(
-                                                                      inputId = "highchart_stats_categories_pct",
-                                                                      onLabel = "N",
-                                                                      offLabel = "%",
-                                                                      value = TRUE,
-                                                                      size = "mini"
-                                                                    )),
-                                                          nav_panel(title = "Tags",
-                                                                    highchartOutput("highchart_stats_tags"),
-                                                                    switchInput(
-                                                                      inputId = "highchart_stats_tags_treemap",
-                                                                      onLabel = "Bars",
-                                                                      offLabel = "Treemap",
-                                                                      value = TRUE,
-                                                                      size = "mini"
-                                                                    ),
-                                                                    switchInput(
-                                                                      inputId = "highchart_stats_tags_pct",
-                                                                      onLabel = "N",
-                                                                      offLabel = "%",
-                                                                      value = TRUE,
-                                                                      size = "mini"
-                                                                    )),
-                                                          nav_panel(title = "Territoire",
-                                                                    highchartOutput("highchart_stats_territoire"),
-                                                                    switchInput(
-                                                                      inputId = "highchart_stats_territoire_treemap",
-                                                                      onLabel = "Bars",
-                                                                      offLabel = "Treemap",
-                                                                      value = TRUE,
-                                                                      size = "mini"
-                                                                    ),
-                                                                    switchInput(
-                                                                      inputId = "highchart_stats_territoire_pct",
-                                                                      onLabel = "N",
-                                                                      offLabel = "%",
-                                                                      value = TRUE,
-                                                                      size = "mini"
-                                                                    ))
-                                                          ,
-                                                          nav_panel(title = "État du signalement",
-                                                                    highchartOutput("highchart_stats_sigstate"),
-                                                                    switchInput(
-                                                                      inputId = "highchart_stats_sigstate_treemap",
-                                                                      onLabel = "Bars",
-                                                                      offLabel = "Treemap",
-                                                                      value = TRUE,
-                                                                      size = "mini"
-                                                                    ),
-                                                                    switchInput(
-                                                                      inputId = "highchart_stats_sigstate_pct",
-                                                                      onLabel = "N",
-                                                                      offLabel = "%",
-                                                                      value = TRUE,
-                                                                      size = "mini"
-                                                                    ))
+                                    card(full_screen = TRUE,fill = FALSE,
+                                      card_title(div(class = "card-title-container",
+                                                     div(class = "title-tooltip","Éléments descriptifs",
+                                                         tooltip(
+                                                           bs_icon("info-circle"),
+                                                           "Nombre de signalements en niveau (#) et en part du total (%). Les filtres réalisés s'appliquent aux graphiques."
+                                                         )),
+                                                     div(class = "radio-group-buttons",
+                                                         create_radio("highchart_stats_pct","pct")))),
+                                      card_body(navset_card_underline(height = "600px",
+
+                                                                      nav_panel(title = "Catégories",
+                                                                                withSpinner(highchartOutput("highchart_stats_categories"))),
+                                                                      nav_panel(title = "Tags",
+                                                                                highchartOutput("highchart_stats_tags")),
+                                                                      nav_panel(title = "Territoire",
+                                                                                highchartOutput("highchart_stats_territoire")),
+                                                                      nav_panel(title = "État du signalement",
+                                                                                highchartOutput("highchart_stats_sigstate"))
+                                      )),
+                                      card_footer(create_radio("highchart_stats_type","graph"))
                                     ),
-                                    card(card_header("Analyse temporelle",
-                                                     tooltip(
-                                                       bs_icon("info-circle"),
-                                                       "MMn : moyenne mobile d'ordre n"
-                                                     )),
-                                           card_body(
-                                             navset_card_underline(nav_panel(title = "Données brutes",
-                                                                             withSpinner(highchartOutput("exploration_timegraph"))),
-                                                                   nav_panel(title = "Saisonnalité",
-                                                                             pickerInput(inputId = "select_seasonal",
+                                    card(full_screen = TRUE,fill = FALSE,
+                                         card_title("Analyse temporelle",
+                                                    tooltip(
+                                                      bs_icon("info-circle"),
+                                                      "MMn : moyenne mobile d'ordre n"
+                                                    )),
+                                         card_body(
+                                           navset_card_underline(nav_panel(title = "Données brutes",
+                                                                           withSpinner(highchartOutput("exploration_timegraph"))),
+                                                                 nav_panel(title = "Saisonnalité",
+                                                                           create_picker(id = "select_seasonal",
                                                                                          choices = c("Hebdomadaire","Mensuel",
                                                                                                      "Trimestriel","Annuel"),
-                                                                                         selected = "Hebdomadaire"),
-                                                                             withSpinner(plotlyOutput("exploration_timegraph_seasonal"))))
-                                           )
+                                                                                         selected = "Hebdomadaire",
+                                                                                         multiple = FALSE),
+                                                                           withSpinner(plotlyOutput("exploration_timegraph_seasonal"))))
+                                         )
 
                                     ),
-                                    card(card_header("Analyse spatiale"),
+                                    card(full_screen = TRUE,fill = FALSE,
+                                         card_title("Analyse spatiale",
+                                                    tooltip(bs_icon("info-circle"),
+                                                            "Il serait pertinent de rapporter le nombre de signalements à la population.")),
                                          card_body(
                                            navset_card_underline(nav_panel(title = "Départements",
                                                                            withSpinner(highchartOutput("exploration_map_dep"))),
@@ -109,67 +68,39 @@ nav_panel_exploration <- function() {
                                     )
                           ),
                           nav_panel("Comparaisons",icon = bs_icon("graph-up"),
-                                    layout_sidebar(
-                                      fillable = TRUE,
-                                      sidebar = sidebar(
-                                        pickerInput(inputId = "variables_compare",
-                                                    label = "Variable à comparer",
-                                                    choices = c(""),
-                                                    options = list(
-                                                      `live-search` = TRUE,
-                                                      `container` = 'body')),
-                                        pickerInput(inputId = "modalites_compare",
-                                                    label = "Modalitées",
-                                                    choices = c(),
-                                                    options = list(
-                                                      `live-search` = TRUE,
-                                                      `dropupAuto` = FALSE,
-                                                      `container` = 'body'),
-                                                    multiple = TRUE)
-                                      ),
-                                      navset_card_underline(
-                                        nav_panel(title = "Catégories",
-                                                  highchartOutput("highchart_compare_categories"),
-                                                  switchInput(
-                                                    inputId = "highchart_compare_categories_pct",
-                                                    onLabel = "N",
-                                                    offLabel = "%",
-                                                    value = TRUE,
-                                                    size = "mini"
-                                                  )),
-                                        nav_panel(title = "Tags",
-                                                  highchartOutput("highchart_compare_tags"),
-                                                  switchInput(
-                                                    inputId = "highchart_compare_tags_pct",
-                                                    onLabel = "N",
-                                                    offLabel = "%",
-                                                    value = TRUE,
-                                                    size = "mini"
-                                                  )),
-                                        nav_panel(title = "Territoire",
-                                                  highchartOutput("highchart_compare_territoire"),
-                                                  switchInput(
-                                                    inputId = "highchart_compare_territoire_pct",
-                                                    onLabel = "N",
-                                                    offLabel = "%",
-                                                    value = TRUE,
-                                                    size = "mini"
-                                                  ))
-                                        ,
-                                        nav_panel(title = "État du signalement",
-                                                  highchartOutput("highchart_compare_sigstate"),
-                                                  switchInput(
-                                                    inputId = "highchart_compare_sigstate_pct",
-                                                    onLabel = "N",
-                                                    offLabel = "%",
-                                                    value = TRUE,
-                                                    size = "mini"
-                                                  )))
-                                    )),
+                                    card(full_screen = TRUE,fill = FALSE,
+                                      card_title(div(class = "card-title-container",
+                                                     div(class = "title-tooltip","Comparaisons",
+                                                         tooltip(
+                                                           bs_icon("info-circle"),
+                                                           "Comparaison d'un sous-ensemble de signalements en niveau (#) ou en part du total (%). Les filtres réalisés s'appliquent aux comparaisons."
+                                                         )),
+                                                     div(class = "radio-group-buttons",
+                                                         create_radio("highchart_compare_pct","pct")))),
+                                      card_body(
+                                        layout_sidebar(
+                                          fillable = TRUE,
+                                          sidebar = sidebar(
+                                            create_picker(id = "variables_compare", label = "Variable à comparer",multiple = FALSE),
+                                            create_picker(id = "modalites_compare", label = "Modalitées")
+                                          ),
+                                          navset_card_underline(
+                                            nav_panel(title = "Catégories",
+                                                      highchartOutput("highchart_compare_categories")),
+                                            nav_panel(title = "Tags",
+                                                      highchartOutput("highchart_compare_tags")),
+                                            nav_panel(title = "Territoire",
+                                                      highchartOutput("highchart_compare_territoire")),
+                                            nav_panel(title = "État du signalement",
+                                                      highchartOutput("highchart_compare_sigstate")))
+                                        )
+                                      ))
+                          ),
                           nav_panel("Données brutes",icon = bs_icon("database"),
-                                    card(card_header("Données brutes"),
-                                         card_body(DTOutput("exploration_donnees_brutes"),
-                                                   downloadButton(
+                                    card(full_screen = TRUE,fill = FALSE,
+                                         card_title("Données brutes"),
+                                         card_body(DTOutput("exploration_donnees_brutes")),
+                                         card_footer(downloadButton(
                                                      "downloadData", "Télécharger",
                                                      class = "btn-primary rounded-0"
                                                    )))),

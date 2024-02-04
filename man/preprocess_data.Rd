@@ -4,10 +4,10 @@
 \alias{preprocess_data}
 \title{Title}
 \usage{
-preprocess_data(path = "../../raw-data/signalconso.csv")
+preprocess_data(file = "signalconso.csv")
 }
 \arguments{
-\item{path}{}
+\item{file}{}
 }
 \description{
 Title
