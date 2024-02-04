@@ -8,7 +8,7 @@ app_server <- function(input, output, session) {
 
   options(warn = -1)
 
-  source("set_cfg.R")
+  # source("set_cfg.R")
 
   data <- reactiveVal()
   data_filtered <- reactiveVal()
