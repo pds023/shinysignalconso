@@ -2,7 +2,7 @@
 #'
 #' @param request Internal parameter for `{shiny}`.
 #'     DO NOT REMOVE.
-#' @import shiny bslib highcharter bsicons shinyWidgets arrow DT shinycssloaders xts zoo plotly timetk markdown shinyRatings
+#' @import shiny bslib highcharter bsicons shinyWidgets arrow DT sever waiter xts zoo plotly timetk markdown
 #' @noRd
 app_ui <- function(request) {
   tagList(
@@ -11,6 +11,15 @@ app_ui <- function(request) {
     # Your application UI logic
     page_fluid(
       theme =  bs_theme(),
+      useSever(),
+      useWaiter(),
+      autoWaiter(html =  spin_dots(),color = "#FFF"),
+      waiterPreloader(color = "#000",
+                      html =  tagList(
+                        spin_dots(),
+                        tags$style(".waiter-overlay-content { display: flex; flex-direction: column; align-items: center; } .my-custom-space { margin-top: 40px; }"), # CSS personnalisé pour l'espacement
+                        div(class = "my-custom-space", h4("Chargement, veuillez patienter...")) # Texte avec espace personnalisé
+                      )),
       includeCSS("inst/app/www/styles.css"),
       list(tags$head(HTML('<link rel="icon", href="www/logoapp.png",
                                    type="image/png" />')),

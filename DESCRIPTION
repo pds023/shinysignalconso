@@ -21,11 +21,11 @@ Imports:
     markdown,
     plotly,
     readxl,
+    sever,
     shiny (>= 1.8.0),
-    shinycssloaders,
-    shinyRatings,
     shinyWidgets,
     timetk,
+    waiter,
     xts,
     zoo
 Encoding: UTF-8

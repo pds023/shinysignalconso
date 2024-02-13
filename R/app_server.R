@@ -8,6 +8,14 @@ app_server <- function(input, output, session) {
 
   options(warn = -1)
 
+  disconnected <- tagList(
+    h1("Oups, quelque chose s'est mal passé !"),
+    p("Il semble que vous ayez été déconnecté. Veuillez rafraîchir la page ou revenir plus tard."),
+    reload_button("Rafraîchir", class = "warning")
+  )
+  sever(html = disconnected, bg_color = "#000")
+
+
   source("set_cfg.R")
 
   data <- reactiveVal()
