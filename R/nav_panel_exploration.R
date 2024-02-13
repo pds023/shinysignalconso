@@ -25,7 +25,7 @@ nav_panel_exploration <- function() {
                                       card_body(navset_card_underline(height = "600px",
 
                                                                       nav_panel(title = "Catégories",
-                                                                                withSpinner(highchartOutput("highchart_stats_categories"))),
+                                                                                highchartOutput("highchart_stats_categories")),
                                                                       nav_panel(title = "Tags",
                                                                                 highchartOutput("highchart_stats_tags")),
                                                                       nav_panel(title = "Territoire",
@@ -43,14 +43,14 @@ nav_panel_exploration <- function() {
                                                     )),
                                          card_body(
                                            navset_card_underline(nav_panel(title = "Données brutes",
-                                                                           withSpinner(highchartOutput("exploration_timegraph"))),
+                                                                           highchartOutput("exploration_timegraph")),
                                                                  nav_panel(title = "Saisonnalité",
                                                                            create_picker(id = "select_seasonal",
                                                                                          choices = c("Hebdomadaire","Mensuel",
                                                                                                      "Trimestriel","Annuel"),
                                                                                          selected = "Hebdomadaire",
                                                                                          multiple = FALSE),
-                                                                           withSpinner(plotlyOutput("exploration_timegraph_seasonal"))))
+                                                                           plotlyOutput("exploration_timegraph_seasonal")))
                                          )
 
                                     ),
@@ -60,9 +60,9 @@ nav_panel_exploration <- function() {
                                                             "Il serait pertinent de rapporter le nombre de signalements à la population.")),
                                          card_body(
                                            navset_card_underline(nav_panel(title = "Départements",
-                                                                           withSpinner(highchartOutput("exploration_map_dep"))),
+                                                                           highchartOutput("exploration_map_dep")),
                                                                  nav_panel(title = "Régions",
-                                                                           withSpinner(highchartOutput("exploration_map_reg"))))
+                                                                           highchartOutput("exploration_map_reg")))
                                          )
 
                                     )
