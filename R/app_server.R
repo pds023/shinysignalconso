@@ -18,6 +18,8 @@ app_server <- function(input, output, session) {
 
   source("set_cfg.R")
 
+
+
   data <- reactiveVal()
   data_filtered <- reactiveVal()
   data_categories <- reactiveVal()
