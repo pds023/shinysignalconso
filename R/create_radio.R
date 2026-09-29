@@ -1,11 +1,11 @@
-#' Title
+#' Create a compact chart option selector
 #'
-#' @param id
-#'
-#' @return
+#' @param id Shiny input identifier.
+#' @param type Selector type: \code{unite}, \code{pct}, or \code{graph}.
+#' @param disabled_state Whether the selector starts disabled.
+#' @return A Shiny input tag, or NULL for an unsupported selector type.
+#' @importFrom shinyWidgets radioGroupButtons
 #' @export
-#'
-#' @examples
 create_radio <- function(id,type,disabled_state = FALSE) {
   if(type %in% "unite"){
     return(radioGroupButtons(

@@ -1,10 +1,9 @@
 
-#' Title
+#' Create the legacy information menu
 #'
-#' @return
+#' @return A bslib navigation menu with credits and methodology panels.
+#' @import bslib bsicons
 #' @export
-#'
-#' @examples
 nav_menu_apropos <- function() {
   return(
     nav_menu("À propos",icon = bs_icon("info-circle-fill"),

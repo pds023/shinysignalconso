@@ -2,13 +2,18 @@
 % Please edit documentation in R/dl_button_serv.R
 \name{dl_button_serv}
 \alias{dl_button_serv}
-\title{Title}
+\title{Create a CSV download handler}
 \usage{
 dl_button_serv(data, label)
 }
 \arguments{
-\item{variables}{}
+\item{data}{A data frame to export.}
+
+\item{label}{File name without the CSV extension.}
+}
+\value{
+A Shiny download handler.
 }
 \description{
-Title
+Create a CSV download handler
 }

@@ -6,3 +6,6 @@
 .quarto
 set_cfg.R
 .Renviron.sh
+.Renviron
+.r-library/
+.local/

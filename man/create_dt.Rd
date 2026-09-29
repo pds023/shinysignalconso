@@ -2,13 +2,22 @@
 % Please edit documentation in R/create_dt.R
 \name{create_dt}
 \alias{create_dt}
-\title{Title}
+\title{Render a table with column visibility controls}
 \usage{
 create_dt(data, length = 5, cols_names = NULL, select_cols = FALSE)
 }
 \arguments{
-\item{length}{}
+\item{data}{A data frame to display.}
+
+\item{length}{Number of rows to display on each page.}
+
+\item{cols_names}{Optional vector of column labels.}
+
+\item{select_cols}{Whether to start with a restricted set of visible columns.}
+}
+\value{
+A Shiny render function for a DT output.
 }
 \description{
-Title
+Render a table with column visibility controls
 }

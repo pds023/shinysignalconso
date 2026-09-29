@@ -2,10 +2,13 @@
 % Please edit documentation in R/sidebar_exploration.R
 \name{sidebar_exploration}
 \alias{sidebar_exploration}
-\title{Title}
+\title{Sidebar filters shared by every analysis view}
 \usage{
 sidebar_exploration()
 }
+\value{
+A bslib sidebar with date, category and territory filters.
+}
 \description{
-Title
+Sidebar filters shared by every analysis view
 }

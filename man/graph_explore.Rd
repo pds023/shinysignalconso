@@ -2,13 +2,30 @@
 % Please edit documentation in R/graph_explore.R
 \name{graph_explore}
 \alias{graph_explore}
-\title{Title}
+\title{Plot a distribution of reports}
 \usage{
-graph_explore(data, input_type, input_pct, group = FALSE)
+graph_explore(
+  data,
+  input_type = "bar",
+  input_pct = "niv",
+  group = FALSE,
+  max_items = 12L
+)
 }
 \arguments{
-\item{input_pct}{}
+\item{data}{A two-column table containing labels and counts.}
+
+\item{input_type}{Chart type: bar or treemap (pie is a legacy alias).}
+
+\item{input_pct}{Counts (niv or nb) or percentages.}
+
+\item{group}{Whether the first of three columns contains a group label.}
+
+\item{max_items}{Maximum displayed categories, including the remaining categories.}
+}
+\value{
+A Highcharter widget.
 }
 \description{
-Title
+Plot a distribution of reports
 }

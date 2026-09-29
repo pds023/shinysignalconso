@@ -2,17 +2,33 @@
 % Please edit documentation in R/create_picker.R
 \name{create_picker}
 \alias{create_picker}
-\title{Title}
+\title{Searchable multiple selection}
 \usage{
 create_picker(
   id,
   label = NULL,
-  choices = c(),
+  choices = character(),
   multiple = TRUE,
   selected = NULL,
   select_all = TRUE
 )
 }
+\arguments{
+\item{id}{Shiny input identifier.}
+
+\item{label}{Label displayed above the selection control.}
+
+\item{choices}{Available values, optionally named with display labels.}
+
+\item{multiple}{Whether more than one value can be selected.}
+
+\item{selected}{Initially selected values.}
+
+\item{select_all}{Whether to show select-all and clear-all actions.}
+}
+\value{
+A searchable Shiny picker input.
+}
 \description{
-Title
+Searchable multiple selection
 }

@@ -1,389 +1,213 @@
-#' The application server-side
-#'
-#' @param input,output,session Internal parameters for {shiny}.
-#'     DO NOT REMOVE.
-#' @import shiny
+#' The application server
+#' @param input,output,session Internal Shiny parameters.
+#' @import shiny data.table
 #' @noRd
 app_server <- function(input, output, session) {
-
-  options(warn = -1)
-
-  disconnected <- tagList(
-    h1("Oups, quelque chose s'est mal passé !"),
-    p("Il semble que vous ayez été déconnecté. Veuillez rafraîchir la page ou revenir plus tard."),
-    reload_button("Rafraîchir", class = "warning")
-  )
-  sever(html = disconnected, bg_color = "#000")
-
-
-  source("set_cfg.R")
-
-
-
-  data <- reactiveVal()
-  data_filtered <- reactiveVal()
-  data_categories <- reactiveVal()
-  data_subcategories <- reactiveVal()
-  data_tags <- reactiveVal()
-  data_territory <- reactiveVal()
-  data_sigstate <- reactiveVal()
-  data_years <- reactiveVal()
-
-  filters_applied <- reactiveVal(FALSE)
-
-  data(as.data.table(s3read_using(
-    read_parquet,
-    object = "signalconso.parquet",
-    bucket = "awsbucketpf/shinysignalconso"
-  )))
-
-  suggestions <- s3read_using(
-    read_parquet,
-    object = "suggestions.parquet",
-    bucket = "awsbucketpf/shinysignalconso"
-  )
-
-  output$signalconsometh <- renderText({
-    includeMarkdown("inst/app/www/signalconsometh.md")
+  source_error <- NULL
+  source_info <- tryCatch(load_signalconso_data(), error = function(e) {
+    source_error <<- conditionMessage(e)
+    list(data = NULL, mode = "error", label = "Source indisponible", detail = "")
   })
-  output$apropos <- renderText({
-    includeMarkdown("inst/app/www/apropos.md")
+  data <- source_info$data
+  date_bounds <- if (!is.null(data) && nrow(data)) range(data$date) else as.Date(c(NA, NA))
+  filter_columns <- c(category = "category", region = "reg_name", departement = "dep_name",
+    subcategories = "subcategories", tags = "tags", sigstate = "signalement_traitement")
+  default_filters <- c(list(dates = date_bounds), setNames(rep(list(character()), length(filter_columns)), filter_columns))
+  applied_filters <- reactiveVal(default_filters)
+  pending_filters <- reactive({
+    values <- lapply(names(filter_columns), function(key) {
+      value <- input[[paste0("exploration_filter_", key)]]
+      if (is.null(value)) character() else sort(as.character(value))
+    })
+    names(values) <- filter_columns
+    dates <- input$filter_dates
+    if (is.null(dates) || length(dates) != 2L) dates <- date_bounds
+    c(list(dates = as.Date(dates)), values)
   })
-
-
-  observeEvent(input$suggestions,{
-    showModal(modalDialog(
-      title = "Soumettre une suggestion",
-      textAreaInput(inputId = "suggestion_text",label = "Suggestion :",placeholder = "Merci de décrire votre suggestion"),
-      h5("Merci de ne pas renseigner d'informations personnelles dans ce champ. Les informations soumises sont enregistrées."),
-      footer = tagList(
-        modalButton("Annuler"),
-        actionButton("ok", "Envoyer")),
-      easyClose = TRUE)
-    )
+  if (!is.null(data) && nrow(data)) {
+    updateDateRangeInput(session, "filter_dates", start = date_bounds[1], end = date_bounds[2],
+      min = date_bounds[1], max = date_bounds[2])
+    for (key in names(filter_columns)) {
+      shinyWidgets::updatePickerInput(session, paste0("exploration_filter_", key),
+        choices = sort(unique(data[[filter_columns[[key]]]])), selected = character())
+    }
+  }
+  observeEvent(input$exploration_filters_apply, {
+    filters <- pending_filters()
+    if (anyNA(filters$dates) || filters$dates[1] > filters$dates[2]) {
+      showNotification("Choisissez une période valide : la fin doit suivre le début.", type = "warning")
+      return()
+    }
+    applied_filters(filters)
   })
-  observeEvent(input$ok,{
-    removeModal()
-    show_alert(title = "Merci pour votre suggestion !",type = "success")
-    print(input$suggestion_text)
-    suggestions <- as.data.table(rbind(suggestions,cbind(as.character(Sys.Date()),input$suggestion_text)))
-    s3write_using(
-      x = suggestions,
-      FUN = write_parquet,
-      object = "suggestions.parquet",
-      bucket = "awsbucketpf/shinysignalconso"
-    )
+  observeEvent(input$exploration_filters_reset, {
+    for (key in names(filter_columns)) {
+      shinyWidgets::updatePickerInput(session, paste0("exploration_filter_", key), selected = character())
+    }
+    updateDateRangeInput(session, "filter_dates", start = date_bounds[1], end = date_bounds[2])
+    applied_filters(default_filters)
   })
-
-
-
-  observe({
-    if(is.null(data)){return(NULL)
-    } else{
-      if(!filters_applied()){
-        data_categories(data()[,.N,category][order(N,decreasing = TRUE)])
-        data_subcategories(data()[,.N,subcategories][order(N,decreasing = TRUE)])
-        data_tags(data()[,.N,tags][order(N,decreasing = TRUE)])
-        data_sigstate(data()[,.N,signalement_traitement][order(N,decreasing = TRUE)])
-        data_territory(data()[,.N,.(reg_code,reg_name,dep_code,dep_name,`hc-key`)][order(N,decreasing = TRUE)])
-        data_years(data()[,.N,annee][order(N,decreasing = TRUE)])
-      } else{
-        data_categories(data_filtered()[,.N,category][order(N,decreasing = TRUE)])
-        data_subcategories(data_filtered()[,.N,subcategories][order(N,decreasing = TRUE)])
-        data_tags(data_filtered()[,.N,tags][order(N,decreasing = TRUE)])
-        data_sigstate(data_filtered()[,.N,signalement_traitement][order(N,decreasing = TRUE)])
-        data_territory(data_filtered()[,.N,.(reg_code,reg_name,dep_code,dep_name,`hc-key`)][order(N,decreasing = TRUE)])
-        data_years(data_filtered()[,.N,annee][order(N,decreasing = TRUE)])
+  filtered <- reactive({
+    validate(need(is.null(source_error), "Les données ne sont pas disponibles. Consultez le message en haut de page."))
+    filter_signalconso(data, applied_filters())
+  })
+  nonempty <- reactive({
+    current <- filtered()
+    validate(need(nrow(current) > 0, "Aucun signalement pour cette sélection. Élargissez la période ou réinitialisez les filtres."))
+    current
+  })
+  output$source_badge <- renderUI({
+    span(class = paste("source-badge", source_info$mode), span(class = "status-dot"),
+      if (source_info$mode == "demo") "Mode démonstration" else source_info$label)
+  })
+  output$source_notice <- renderUI({
+    if (!is.null(source_error)) {
+      div(class = "source-notice error-notice", role = "alert", bsicons::bs_icon("exclamation-triangle"),
+        div(strong("Impossible de charger les données"), p(source_error),
+          p("Vérifiez la source configurée puis relancez l’application.")))
+    } else if (source_info$mode == "demo") {
+      div(class = "source-notice", role = "status", bsicons::bs_icon("info-circle"),
+        div(strong("Un aperçu pour explorer librement"), span(" · Données fictives de démonstration. Les chiffres ne décrivent pas les signalements réels.")))
+    } else {
+      div(class = "source-notice live-notice", bsicons::bs_icon("database-check"),
+        span(source_info$detail))
+    }
+  })
+  output$filter_pending <- renderUI({
+    if (!isTRUE(all.equal(pending_filters(), applied_filters(), check.attributes = FALSE))) {
+      span(class = "pending-badge", role = "status", "Filtres modifiés · Cliquez sur Appliquer")
+    }
+  })
+  output$filter_summary <- renderUI({
+    current <- filtered()
+    filters <- applied_filters()
+    selected <- unlist(filters[unname(filter_columns)], use.names = FALSE)
+    div(class = "scope-summary",
+      bsicons::bs_icon("funnel"), strong(paste(format_count(nrow(current)), "signalements")),
+      span(class = "scope-separator", "·"),
+      span(if (all(!is.na(filters$dates))) paste(format(filters$dates[1], "%d/%m/%Y"), "—", format(filters$dates[2], "%d/%m/%Y")) else "Aucune période disponible"),
+      if (!length(selected)) span(class = "filter-chip", "Tous les territoires · Toutes les catégories")
+      else lapply(selected, function(x) span(class = "filter-chip", x)))
+  })
+  output$kpi_cards <- renderUI({
+    current <- filtered()
+    total <- nrow(current)
+    answered <- if (total) sum(current$signalement_traitement == "Signalement répondu") / total * 100 else NA_real_
+    categories <- if (total) current[, .N, by = category][order(-N)] else NULL
+    territories <- unique(current$dep_code[!is.na(current$dep_code) & !current$dep_code %in% c("", "Non renseigné")])
+    div(class = "kpi-grid",
+      metric_card("Signalements", format_count(total), "dans votre sélection", "chat-left-text", "primary"),
+      metric_card("Avec une réponse", if (is.na(answered)) "—" else paste0(format(round(answered, 1), decimal.mark = ",", nsmall = 1), " %"),
+        "part des signalements sélectionnés", "reply", "mint"),
+      metric_card("Première catégorie", if (total) categories$category[1] else "—",
+        if (total) paste0(format_count(categories$N[1]), " signalements · ", round(categories$N[1] / total * 100), " % du total") else "aucun signalement", "bookmark", "sand"),
+      metric_card("Départements", format_count(length(territories)), "avec au moins un signalement", "geo-alt", "blue"))
+  })
+  output$exploration_timegraph <- highcharter::renderHighchart({
+    graph_timeline(nonempty(), input$time_granularity %||% "month", date_range = applied_filters()$dates)
+  })
+  output$highchart_stats_categories <- highcharter::renderHighchart({
+    graph_explore(nonempty()[, .N, by = category], "bar", input$highchart_stats_pct %||% "niv", max_items = 10)
+  })
+  output$highchart_stats_sigstate <- highcharter::renderHighchart({
+    graph_explore(nonempty()[, .N, by = signalement_traitement], "bar", "niv")
+  })
+  output$highchart_stats_tags <- highcharter::renderHighchart({
+    graph_explore(nonempty()[, .N, by = tags], input$highchart_stats_type %||% "bar", input$highchart_stats_pct %||% "niv")
+  })
+  output$exploration_seasonality <- highcharter::renderHighchart({
+    graph_seasonality(nonempty(), input$select_seasonal %||% "weekday")
+  })
+  output$territory_map <- highcharter::renderHighchart({
+    current <- nonempty()
+    tryCatch(graph_territory(current, input$territory_level %||% "region"),
+      error = function(e) validate(need(FALSE, conditionMessage(e))))
+  })
+  output$territory_ranking <- highcharter::renderHighchart({
+    column <- if (identical(input$territory_level, "department")) "dep_name" else "reg_name"
+    graph_explore(nonempty()[, .N, by = column], "bar", "niv")
+  })
+  observeEvent(list(input$variables_compare, applied_filters()), {
+    req(input$variables_compare)
+    current <- filtered()
+    choices <- sort(unique(current[[input$variables_compare]]))
+    selected <- intersect(isolate(input$modalites_compare), choices)
+    if (!length(selected)) selected <- head(choices, 3)
+    shinyWidgets::updatePickerInput(session, "modalites_compare", choices = choices, selected = selected)
+  }, ignoreNULL = FALSE)
+  output$comparison_chart <- highcharter::renderHighchart({
+    current <- nonempty()
+    validate(need(length(input$modalites_compare) >= 2, "Choisissez au moins deux groupes à comparer."),
+      need(length(input$modalites_compare) <= 5, "Sélectionnez au maximum cinq groupes pour garder le graphique lisible."))
+    graph_compare(current, input$compare_dimension %||% "category", input$variables_compare,
+      input$modalites_compare, input$highchart_compare_pct %||% "percent")
+  })
+  output$exploration_donnees_brutes <- DT::renderDT({
+    current <- filtered()
+    DT::datatable(current[, .(date, category, subcategories, dep_name, reg_name, signalement_traitement, tags)],
+      colnames = c("Date", "Catégorie", "Sous-catégorie", "Département", "Région", "Traitement", "Étiquettes"),
+      rownames = FALSE, selection = "none", escape = TRUE,
+      options = list(pageLength = 15, lengthMenu = c(15, 30, 50, 100), scrollX = TRUE,
+        order = list(list(0, "desc")), language = dt_french()))
+  }, server = TRUE)
+  output$downloadData <- downloadHandler(
+    filename = function() paste0("signalconso-", if (source_info$mode == "demo") "DEMONSTRATION-" else "", Sys.Date(), ".csv"),
+    contentType = "text/csv; charset=UTF-8",
+    content = function(file) {
+      export <- copy(filtered())
+      export[, source_donnees := if (source_info$mode == "demo") "DEMONSTRATION - DONNEES FICTIVES" else source_info$label]
+      # Neutralize spreadsheet formulas in imported labels before CSV export.
+      text_cols <- names(export)[vapply(export, is.character, logical(1))]
+      for (column in text_cols) {
+        values <- export[[column]]
+        unsafe <- !is.na(values) & grepl("^[[:space:]]*[=+@-]", values)
+        values[unsafe] <- paste0("'", values[unsafe])
+        set(export, j = column, value = values)
       }
-    }
+      data.table::fwrite(export, file, sep = ";", bom = TRUE, dateTimeAs = "ISO")
+    })
+  observeEvent(input$methodology, {
+    showModal(modalDialog(title = "Quelques clés pour lire les données", size = "l", easyClose = TRUE,
+      includeMarkdown(app_sys("app/www/signalconsometh.md")),
+      footer = tagList(tags$a("Consulter la source ↗", href = "https://www.data.gouv.fr/datasets/signalconso",
+        target = "_blank", rel = "noopener noreferrer", class = "btn btn-outline-primary"), modalButton("J’ai compris"))))
   })
+}
 
-  # Dynamic sidebar filters ----------------
-  output$sidebar_exploration <- sidebar_exploration()
+#' @noRd
+`%||%` <- function(x, y) if (is.null(x) || !length(x)) y else x
 
+#' @noRd
+format_count <- function(x) format(x, big.mark = " ", scientific = FALSE, trim = TRUE)
 
-  ## Maj PickerInput ----------------
-  observe({
-    if(is.null(data_years())){return(NULL)
-    } else{
-      if(!filters_applied()){
-        updatePickerInput(session = session,inputId = "exploration_filter_category",choices = data_categories()[,category])
-        updatePickerInput(session = session,inputId = "exploration_filter_subcategories",choices = data_subcategories()[,subcategories])
-        updatePickerInput(session = session,inputId = "exploration_filter_tags",choices = data_tags()[,tags])
-        updatePickerInput(session = session,inputId = "exploration_filter_region",choices = unique(data_territory()[,reg_name]))
-        updatePickerInput(session = session,inputId = "exploration_filter_departement",choices = unique(data_territory()[,dep_name]))
-        updatePickerInput(session = session,inputId = "exploration_filter_sigstate",choices = unique(data_sigstate()[,signalement_traitement]))
-        updatePickerInput(session = session,inputId = "exploration_filter_annee",choices = unique(data_years()[,annee]))
+#' @noRd
+metric_card <- function(label, value, detail, icon, tone) {
+  div(class = paste("metric-card", paste0("metric-", tone)),
+    div(class = "metric-label", span(label), span(class = "metric-icon", bsicons::bs_icon(icon))),
+    div(class = paste("metric-value", if (label == "Première catégorie") "metric-category"), value),
+    div(class = "metric-detail", detail))
+}
 
-        updatePickerInput(session = session,inputId = "variables_compare",choices = colnames(data()))
-      }
-    }
-  })
+#' Filter a normalized table without modifying it
+#' @noRd
+filter_signalconso <- function(data, filters) {
+  if (is.null(data)) return(data.table::data.table())
+  result <- data
+  if (!is.null(filters$dates) && length(filters$dates) == 2L && !anyNA(filters$dates)) {
+    result <- result[date >= filters$dates[1] & date <= filters$dates[2]]
+  }
+  for (column in intersect(setdiff(names(filters), "dates"), names(result))) {
+    if (length(filters[[column]])) result <- result[get(column) %in% filters[[column]]]
+  }
+  result[]
+}
 
-
-  ## Apply filters ----------------
-
-  observeEvent(input$exploration_filters_apply,{
-    # Récupérer les données
-    tmp <- data()
-
-    # Réinitialiser l'état du filtre
-    filters_applied(FALSE)
-
-    # Appliquer les filtres si les inputs ne sont pas NULL ou vides
-    if (!is.null(input$exploration_filter_category) && length(input$exploration_filter_category) > 0) {
-      tmp <- tmp[category %in% input$exploration_filter_category]
-      filters_applied(TRUE)
-    }
-    if (!is.null(input$exploration_filter_subcategories) && length(input$exploration_filter_subcategories) > 0) {
-      tmp <- tmp[subcategories %in% input$exploration_filter_subcategories]
-      filters_applied(TRUE)
-    }
-    if (!is.null(input$exploration_filter_tags) && length(input$exploration_filter_tags) > 0) {
-      tmp <- tmp[tags %in% input$exploration_filter_tags]
-      filters_applied(TRUE)
-    }
-    if (!is.null(input$exploration_filter_region) && length(input$exploration_filter_region) > 0) {
-      tmp <- tmp[reg_name %in% input$exploration_filter_region]
-      filters_applied(TRUE)
-    }
-    if (!is.null(input$exploration_filter_departement) && length(input$exploration_filter_departement) > 0) {
-      tmp <- tmp[reg_name %in% input$exploration_filter_departement]
-      filters_applied(TRUE)
-    }
-    if (!is.null(input$exploration_filter_sigstate) && length(input$exploration_filter_sigstate) > 0) {
-      tmp <- tmp[signalement_traitement %in% input$exploration_filter_sigstate]
-      filters_applied(TRUE)
-    }
-    if (!is.null(input$exploration_filter_annee) && length(input$exploration_filter_annee) > 0) {
-      tmp <- tmp[annee %in% input$exploration_filter_annee]
-      filters_applied(TRUE)
-    }
-    if (filters_applied()) {
-      data_filtered(tmp)
-    }
-  })
-
-  ## Reset filters ----------------
-  observeEvent(input$exploration_filters_reset,{
-    filters_applied(FALSE)
-  })
-
-  # Highcharts graphs tab1 ----------------
-  observe({
-    output$highchart_stats_categories <- renderHighchart(graph_explore(data = data_categories()[N > 5],
-                                                                       input_type = input$highchart_stats_type,
-                                                                       input_pct = input$highchart_stats_pct))
-  })
-  observe({
-    output$highchart_stats_tags <- renderHighchart(graph_explore(data = data_tags()[N > 5],
-                                                                 input_type = input$highchart_stats_type,
-                                                                 input_pct = input$highchart_stats_pct))
-  })
-  observe({
-    output$highchart_stats_territoire <- renderHighchart(graph_explore(data = data_territory()[N > 5,.(reg_name,dep_name,N)],
-                                                                       input_type = input$highchart_stats_type,
-                                                                       input_pct = input$highchart_stats_pct,
-                                                                       group = TRUE))
-  })
-  observe({
-    output$highchart_stats_sigstate <- renderHighchart(graph_explore(data = data_sigstate()[N > 5],
-                                                                     input_type = input$highchart_stats_type,
-                                                                     input_pct = input$highchart_stats_pct))
-  })
-
-
-  # TODO : split observe to optimize select_seasonal
-  observe({
-    if(is.null(data())){return(NULL)
-    } else{
-      if(!filters_applied()){
-        data_temp <- data()}
-      else{data_temp <- data_filtered()}
-      data_temp <- data_temp[,date := as.Date(creationdate)]
-
-      data_temp[,valeur := .N,date]
-
-      data_temp <- data_temp[,.(date,valeur)]
-      data_temp <- data_temp[!duplicated(date)]
-
-      data_temp_xts <- xts(data_temp[,-1,with = FALSE],order.by = data_temp$date)
-      data_temp_xts$ma30 <- rollapply(data_temp_xts, width = 30, FUN = mean, align = "right", fill = NA)
-      data_temp_xts$ma90 <- rollapply(data_temp_xts$valeur, width = 90, FUN = mean, align = "right", fill = NA)
-
-
-      output$exploration_timegraph <- renderHighchart(
-        highchart(type = "stock") |>
-          hc_add_series(data_temp_xts$valeur, yAxis = 0, name = "Signalements") |>
-          hc_add_series(data_temp_xts$ma30,type = "line", yAxis = 0, name = "MM30") |>
-          hc_add_series(data_temp_xts$ma90,type = "line", yAxis = 0, name = "MM90"))
-    }
-
-    req(input$select_seasonal)
-    if(is.null(input$select_seasonal)){return(NULL)
-    } else{
-      if(input$select_seasonal %in% "Hebdomadaire"){type_graph <- "wday.lbl"}
-      if(input$select_seasonal %in% "Mensuel"){type_graph <- "month.lbl"}
-      if(input$select_seasonal %in% "Trimestriel"){type_graph <- "quarter"}
-      if(input$select_seasonal %in% "Annuel"){type_graph <- "year"}
-
-      output$exploration_timegraph_seasonal <- renderPlotly(
-        data_temp %>%
-          plot_seasonal_diagnostics(date, valeur, .interactive = TRUE,.feature_set = type_graph)
-      )
-    }
-  })
-
-
-  observe({
-    output$exploration_map_dep <-  renderHighchart(
-      hcmap(
-        "countries/fr/fr-all-all",
-        data = data_territory(),
-        value = "N",
-        joinBy = "hc-key",
-        name = "Signalements",
-        dataLabels = list(enabled = TRUE, format = "{point.name}"),
-        borderColor = "#FAFAFA",
-        borderWidth = 0.1,
-        tooltip = list(
-          valueDecimals = 0
-        )  )|>
-        hc_colorAxis(
-          ticklength = 8,
-          type = "logarithmic"
-        )
-    )
-  })
-  observe({
-    data_map_reg <- data_territory()[,sum(N),.(reg_code,substr(`hc-key`,1,6))]
-    colnames(data_map_reg) <- c("reg_code","hc-key","N")
-    output$exploration_map_reg <-  renderHighchart(
-      hcmap(
-        "countries/fr/fr-all",
-        data = data_map_reg,
-        value = "N",
-        joinBy = "hc-key",
-        name = "Signalements",
-        dataLabels = list(enabled = TRUE, format = "{point.name}"),
-        borderColor = "#FAFAFA",
-        borderWidth = 0.1,
-        tooltip = list(
-          valueDecimals = 0
-        )  )|>
-        hc_colorAxis(
-          ticklength = 8,
-          type = "logarithmic"
-        )
-    )
-  })
-
-
-  observeEvent(input$variables_compare,{
-    req(input$variables_compare)
-    if(length(input$variables_compare) > 0){
-      updatePickerInput(session = session,inputId = "modalites_compare",choices = c(unique(data()[,get(input$variables_compare)])),
-                        selected = NULL)
-    }
-  })
-
-  observe({
-    req(input$variables_compare)
-    req(input$modalites_compare)
-
-    if(!filters_applied()){
-      output$highchart_compare_categories <- renderHighchart(
-        graph_compare(data(),"category",input$variables_compare,input$modalites_compare,input$highchart_compare_pct)
-      )
-    } else{
-      output$highchart_compare_categories <- renderHighchart(
-        graph_compare(data_filtered(),"category",input$variables_compare,input$modalites_compare,input$highchart_compare_pct)
-      )
-    }
-  })
-  observe({
-    req(input$variables_compare)
-    req(input$modalites_compare)
-    if(!filters_applied()){
-      output$highchart_compare_tags <- renderHighchart(
-        graph_compare(data(),"tags",input$variables_compare,input$modalites_compare,input$highchart_compare_pct)
-      )
-    } else {
-      output$highchart_compare_tags <- renderHighchart(
-        graph_compare(data_filtered(),"tags",input$variables_compare,input$modalites_compare,input$highchart_compare_pct)
-      )
-    }
-  })
-  observe({
-    req(input$variables_compare)
-    req(input$modalites_compare)
-    if(!filters_applied()){
-      output$highchart_compare_territoire <- renderHighchart(
-        graph_compare(data(),"dep_name",input$variables_compare,input$modalites_compare,input$highchart_compare_pct)
-      )
-    } else {
-      output$highchart_compare_territoire <- renderHighchart(
-        graph_compare(data_filtered(),"dep_name",input$variables_compare,input$modalites_compare,input$highchart_compare_pct)
-      )
-    }
-  })
-  observe({
-    req(input$variables_compare)
-    req(input$modalites_compare)
-    if(!filters_applied()){
-      output$highchart_compare_sigstate <- renderHighchart(
-        graph_compare(data(),"signalement_traitement",input$variables_compare,input$modalites_compare,input$highchart_compare_pct)
-      )
-    } else {
-      output$highchart_compare_sigstate <- renderHighchart(
-        graph_compare(data_filtered(),"signalement_traitement",input$variables_compare,input$modalites_compare,input$highchart_compare_pct)
-      )
-    }
-  })
-
-
-  create_dt(data(),length = 15,cols_names = NULL,select_cols = FALSE)
-
-  observe({
-    if(!filters_applied()){
-      output$exploration_donnees_brutes <- create_dt(data()[,.(category,subcategories,date,status,tags,dep_name,reg_name,signalement_traitement)],
-                                                     length = 15,
-                                                     cols_names = c("Catégorie","Sous-catégorie","Date","Statut","Tags","Dep","Reg","Traitement"),
-                                                     select_cols = FALSE)
-    } else{
-      output$exploration_donnees_brutes <- create_dt(data_filtered()[,.(category,subcategories,date,status,tags,dep_name,reg_name,signalement_traitement)],
-                                                     length = 15,
-                                                     cols_names = c("Catégorie","Sous-catégorie","Date","Statut","Tags","Dep","Reg","Traitement"),
-                                                     select_cols = FALSE)
-    }
-  })
-
-  observe({
-    if(!filters_applied()){
-      output$downloadData <- dl_button_serv(data = data(),label = "signalconso")
-    } else {
-      output$downloadData <- dl_button_serv(data = data_filtered(),label = "signalconso_filtered")
-    }
-  })
-
-  observe({
-    req(input$highchart_stats_type)
-    if(input$highchart_stats_type %in% "pie"){
-      updateRadioGroupButtons(session = session,inputId = "highchart_stats_pct", selected = "niv",disabled = TRUE)
-    } else{
-      updateRadioGroupButtons(session = session,inputId = "highchart_stats_pct",disabled = FALSE)
-    }
-  })
-
-  observe({
-    print(input$modalites_compare)
-    if(is.null(input$modalites_compare)){
-      updateRadioGroupButtons(session = session,inputId = "highchart_compare_pct",disabled = TRUE)
-    } else{
-      updateRadioGroupButtons(session = session,inputId = "highchart_compare_pct",disabled = FALSE)
-    }
-
-  })
-
-
+#' @noRd
+dt_french <- function() {
+  list(search = "Rechercher :", lengthMenu = "Afficher _MENU_ lignes", thousands = " ", decimal = ",",
+    info = "_START_ à _END_ sur _TOTAL_ signalements", infoEmpty = "Aucun signalement",
+    infoFiltered = "(sur _MAX_ dans la sélection)", zeroRecords = "Aucun résultat pour cette recherche",
+    emptyTable = "Aucun signalement pour ces filtres", processing = "Chargement…",
+    paginate = list(first = "Début", previous = "Précédent", "next" = "Suivant", last = "Fin"),
+    aria = list(sortAscending = " : trier par ordre croissant", sortDescending = " : trier par ordre décroissant"))
 }

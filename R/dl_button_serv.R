@@ -1,12 +1,10 @@
 
-#' Title
+#' Create a CSV download handler
 #'
-#' @param variables
-#'
-#' @return
+#' @param data A data frame to export.
+#' @param label File name without the CSV extension.
+#' @return A Shiny download handler.
 #' @export
-#'
-#' @examples
 dl_button_serv <- function(data,label) {
   downloadHandler(
     filename = function(){paste0(label,".csv")},

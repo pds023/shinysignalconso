@@ -1,6 +1,6 @@
 Package: shinySignalConso
 Title: Shiny Signal Conso
-Version: 0.0.0.9000
+Version: 0.1.0
 Authors@R: 
     person("Philippe", "Fontaine", , "philippe.fontaine.ds@proton.me", role = c("cre", "aut"))
 Description: Data visualisation des données de SignalConso disponibles sur
@@ -9,25 +9,23 @@ License: MIT + file LICENSE
 URL: https://github.com/pds023/shinysignalconso
 BugReports: https://github.com/pds023/shinysignalconso/issues
 Imports: 
-    arrow,
-    aws.s3,
     bsicons,
-    bslib,
+    bslib (>= 0.9.0),
     config (>= 0.3.2),
     data.table,
     DT,
     golem (>= 0.4.1),
     highcharter,
+    htmltools,
+    jsonlite,
     markdown,
-    plotly,
-    readxl,
-    sever,
     shiny (>= 1.8.0),
-    shinyWidgets,
-    timetk,
-    waiter,
-    xts,
-    zoo
+    shinyWidgets
+Suggests:
+    arrow,
+    aws.s3,
+    pkgload,
+    testthat
 Encoding: UTF-8
 LazyData: true
-RoxygenNote: 7.2.3
+Config/roxygen2/version: 8.1.0

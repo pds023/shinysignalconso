@@ -2,10 +2,13 @@
 % Please edit documentation in R/nav_panel_exploration.R
 \name{nav_panel_exploration}
 \alias{nav_panel_exploration}
-\title{Title}
+\title{Analysis views}
 \usage{
 nav_panel_exploration()
 }
+\value{
+A bslib tab set containing overview, territory, comparison and data views.
+}
 \description{
-Title
+Analysis views
 }

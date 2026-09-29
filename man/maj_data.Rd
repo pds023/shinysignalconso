@@ -2,13 +2,25 @@
 % Please edit documentation in R/maj_data.R
 \name{maj_data}
 \alias{maj_data}
-\title{Title}
+\title{Télécharger et préparer les données ouvertes SignalConso}
 \usage{
 maj_data(
   url = "https://www.data.gouv.fr/fr/datasets/r/106add51-e925-4121-b0e4-81489c26a43f",
-  destination = "signalconso.csv"
+  destination = "signalconso.csv",
+  output = NULL
 )
 }
+\arguments{
+\item{url}{URL du fichier CSV à télécharger.}
+
+\item{destination}{Chemin du fichier CSV à créer.}
+
+\item{output}{Chemin facultatif du fichier normalisé à créer.}
+}
+\value{
+Un data.table normalisé.
+}
 \description{
-Title
+Le téléchargement est explicite et indépendant du démarrage de l'application.
+Le fichier téléchargé est conservé et aucune donnée n'est envoyée sur S3.
 }

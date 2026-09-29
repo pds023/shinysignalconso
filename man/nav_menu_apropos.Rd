@@ -2,10 +2,13 @@
 % Please edit documentation in R/nav_menu_apropos.R
 \name{nav_menu_apropos}
 \alias{nav_menu_apropos}
-\title{Title}
+\title{Create the legacy information menu}
 \usage{
 nav_menu_apropos()
 }
+\value{
+A bslib navigation menu with credits and methodology panels.
+}
 \description{
-Title
+Create the legacy information menu
 }

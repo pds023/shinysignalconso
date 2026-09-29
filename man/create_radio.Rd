@@ -2,13 +2,20 @@
 % Please edit documentation in R/create_radio.R
 \name{create_radio}
 \alias{create_radio}
-\title{Title}
+\title{Create a compact chart option selector}
 \usage{
 create_radio(id, type, disabled_state = FALSE)
 }
 \arguments{
-\item{id}{}
+\item{id}{Shiny input identifier.}
+
+\item{type}{Selector type: \code{unite}, \code{pct}, or \code{graph}.}
+
+\item{disabled_state}{Whether the selector starts disabled.}
+}
+\value{
+A Shiny input tag, or NULL for an unsupported selector type.
 }
 \description{
-Title
+Create a compact chart option selector
 }

@@ -1,110 +1,53 @@
-
-
-#' Title
-#'
-#' @return
+#' Analysis views
+#' @return A bslib tab set containing overview, territory, comparison and data views.
 #' @export
-#'
-#' @examples
 nav_panel_exploration <- function() {
-  return(
-    nav_panel("Exploration",icon = bs_icon("search"),
-              page_navbar(id = "dataPanel_exploration",
-                          sidebar = uiOutput("sidebar_exploration"),
-                          nav_panel("Vue d'ensemble", icon = bs_icon("clipboard2-data"),
-                                    value = "panel_exploration_vuedensemble",
-                                    card(full_screen = TRUE,fill = FALSE,
-                                      card_title(div(class = "card-title-container",
-                                                     div(class = "title-tooltip","Éléments descriptifs",
-                                                         tooltip(
-                                                           bs_icon("info-circle"),
-                                                           "Nombre de signalements en niveau (#) et en part du total (%). Les filtres réalisés s'appliquent aux graphiques."
-                                                         )),
-                                                     div(class = "radio-group-buttons",
-                                                         create_radio("highchart_stats_pct","pct")))),
-                                      card_body(navset_card_underline(height = "600px",
-
-                                                                      nav_panel(title = "Catégories",
-                                                                                highchartOutput("highchart_stats_categories")),
-                                                                      nav_panel(title = "Tags",
-                                                                                highchartOutput("highchart_stats_tags")),
-                                                                      nav_panel(title = "Territoire",
-                                                                                highchartOutput("highchart_stats_territoire")),
-                                                                      nav_panel(title = "État du signalement",
-                                                                                highchartOutput("highchart_stats_sigstate"))
-                                      )),
-                                      card_footer(create_radio("highchart_stats_type","graph"))
-                                    ),
-                                    card(full_screen = TRUE,fill = FALSE,
-                                         card_title("Analyse temporelle",
-                                                    tooltip(
-                                                      bs_icon("info-circle"),
-                                                      "MMn : moyenne mobile d'ordre n"
-                                                    )),
-                                         card_body(
-                                           navset_card_underline(nav_panel(title = "Données brutes",
-                                                                           highchartOutput("exploration_timegraph")),
-                                                                 nav_panel(title = "Saisonnalité",
-                                                                           create_picker(id = "select_seasonal",
-                                                                                         choices = c("Hebdomadaire","Mensuel",
-                                                                                                     "Trimestriel","Annuel"),
-                                                                                         selected = "Hebdomadaire",
-                                                                                         multiple = FALSE),
-                                                                           plotlyOutput("exploration_timegraph_seasonal")))
-                                         )
-
-                                    ),
-                                    card(full_screen = TRUE,fill = FALSE,
-                                         card_title("Analyse spatiale",
-                                                    tooltip(bs_icon("info-circle"),
-                                                            "Il serait pertinent de rapporter le nombre de signalements à la population.")),
-                                         card_body(
-                                           navset_card_underline(nav_panel(title = "Départements",
-                                                                           highchartOutput("exploration_map_dep")),
-                                                                 nav_panel(title = "Régions",
-                                                                           highchartOutput("exploration_map_reg")))
-                                         )
-
-                                    )
-                          ),
-                          nav_panel("Comparaisons",icon = bs_icon("graph-up"),
-                                    card(full_screen = TRUE,fill = FALSE,
-                                      card_title(div(class = "card-title-container",
-                                                     div(class = "title-tooltip","Comparaisons",
-                                                         tooltip(
-                                                           bs_icon("info-circle"),
-                                                           "Comparaison d'un sous-ensemble de signalements en niveau (#) ou en part du total (%). Les filtres réalisés s'appliquent aux comparaisons."
-                                                         )),
-                                                     div(class = "radio-group-buttons",
-                                                         create_radio("highchart_compare_pct","pct")))),
-                                      card_body(
-                                        layout_sidebar(
-                                          fillable = TRUE,
-                                          sidebar = sidebar(
-                                            create_picker(id = "variables_compare", label = "Variable à comparer",multiple = FALSE),
-                                            create_picker(id = "modalites_compare", label = "Modalitées")
-                                          ),
-                                          navset_card_underline(
-                                            nav_panel(title = "Catégories",
-                                                      highchartOutput("highchart_compare_categories")),
-                                            nav_panel(title = "Tags",
-                                                      highchartOutput("highchart_compare_tags")),
-                                            nav_panel(title = "Territoire",
-                                                      highchartOutput("highchart_compare_territoire")),
-                                            nav_panel(title = "État du signalement",
-                                                      highchartOutput("highchart_compare_sigstate")))
-                                        )
-                                      ))
-                          ),
-                          nav_panel("Données brutes",icon = bs_icon("database"),
-                                    card(full_screen = TRUE,fill = FALSE,
-                                         card_title("Données brutes"),
-                                         card_body(DTOutput("exploration_donnees_brutes")),
-                                         card_footer(downloadButton(
-                                                     "downloadData", "Télécharger",
-                                                     class = "btn-primary rounded-0"
-                                                   )))),
-              )
-    )
-  )
+  bslib::navset_tab(id = "analysis_view",
+    bslib::nav_panel("Vue d’ensemble", value = "overview", icon = bsicons::bs_icon("grid-1x2"),
+      uiOutput("kpi_cards"),
+      div(class = "overview-grid",
+        section_card("L’évolution des signalements", "Prendre du recul sur les tendances dans le temps.",
+          highcharter::highchartOutput("exploration_timegraph", height = "300px"),
+          controls = selectInput("time_granularity", "Regroupement", c("Par mois" = "month", "Par semaine" = "week", "Par jour" = "day"), selected = "month")),
+        section_card("Les catégories à la une", "Les principales catégories, en un regard.",
+          highcharter::highchartOutput("highchart_stats_categories", height = "300px"),
+          controls = radioButtons("highchart_stats_pct", "Unité", c("Nombre" = "niv", "%" = "percent"), inline = TRUE))),
+      div(class = "overview-grid secondary-grid",
+        section_card("Le parcours des signalements", "Du dépôt à la réponse du professionnel.",
+          highcharter::highchartOutput("highchart_stats_sigstate", height = "260px")),
+        section_card("Les rythmes de consommation", "Nombre de signalements cumulés sur la période sélectionnée.",
+          highcharter::highchartOutput("exploration_seasonality", height = "260px"),
+          controls = selectInput("select_seasonal", "Regroupement", c("Jour de la semaine" = "weekday", "Mois de l’année" = "month")))),
+      section_card("Explorer les motifs", "Répartition des étiquettes associées aux signalements.",
+        highcharter::highchartOutput("highchart_stats_tags", height = "300px"),
+        controls = radioButtons("highchart_stats_type", "Représentation", c("Barres" = "bar", "Mosaïque" = "treemap"), inline = TRUE))),
+    bslib::nav_panel("Territoires", value = "territories", icon = bsicons::bs_icon("geo-alt"),
+      div(class = "view-intro", h2("Une lecture des territoires"), p("Repérez où se concentrent les signalements de votre sélection.")),
+      section_card("La répartition géographique", "Volumes bruts · Les différences de population ne sont pas prises en compte.",
+        div(class = "territory-grid",
+          highcharter::highchartOutput("territory_map", height = "480px"),
+          highcharter::highchartOutput("territory_ranking", height = "480px")),
+        controls = radioButtons("territory_level", "Échelle", c("Régions" = "region", "Départements" = "department"), inline = TRUE)),
+      div(class = "reading-note", bsicons::bs_icon("info-circle"), " Un volume élevé ne signifie pas qu’un territoire présente davantage de problèmes : il dépend aussi de sa population et du recours au service.")),
+    bslib::nav_panel("Comparaisons", value = "compare", icon = bsicons::bs_icon("bar-chart"),
+      div(class = "view-intro", h2("Mettre les profils en regard"), p("Comparez jusqu’à cinq groupes sur le même périmètre de données.")),
+      div(class = "comparison-controls",
+        create_picker("variables_compare", "Comparer par", choices = c("Année" = "annee", "Région" = "reg_name", "Catégorie" = "category", "Traitement" = "signalement_traitement"), multiple = FALSE, selected = "annee"),
+        create_picker("modalites_compare", "Groupes à comparer", select_all = FALSE),
+        selectInput("compare_dimension", "Répartir par", c("Catégorie" = "category", "Étiquette" = "tags", "Département" = "dep_name", "Traitement" = "signalement_traitement")),
+        radioButtons("highchart_compare_pct", "Unité", c("Nombre" = "niv", "% du groupe" = "percent"), selected = "percent", inline = TRUE)),
+      section_card("Des profils à comparer", "En pourcentage, chaque groupe a son propre total comme référence.",
+        highcharter::highchartOutput("comparison_chart", height = "440px"))),
+    bslib::nav_panel("Données", value = "data", icon = bsicons::bs_icon("table"),
+      div(class = "view-intro", h2("Revenir aux données"), p("Recherchez dans les signalements du périmètre sélectionné, puis exportez-les au format CSV.")),
+      section_card("Les signalements en détail", "La recherche du tableau affine l’affichage. L’export contient tout le périmètre défini par les filtres latéraux.",
+        DT::DTOutput("exploration_donnees_brutes")),
+      div(class = "reading-note", bsicons::bs_icon("download"), " Export CSV compatible Excel · Encodage UTF-8 · Séparateur point-virgule")))
+}
+#' @noRd
+section_card <- function(title, subtitle, ..., controls = NULL, class = NULL) {
+  tags$section(class = paste("chart-card", class),
+    div(class = "chart-card-header", div(h2(title), p(subtitle)),
+      if (!is.null(controls)) div(class = "chart-controls", controls)),
+    div(class = "chart-card-body", ...))
 }

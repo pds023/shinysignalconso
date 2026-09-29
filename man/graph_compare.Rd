@@ -2,13 +2,24 @@
 % Please edit documentation in R/graph_compare.R
 \name{graph_compare}
 \alias{graph_compare}
-\title{Title}
+\title{Compare distributions across selected groups}
 \usage{
-graph_compare(data, groupColumn, input_var, input_mod, input_pct)
+graph_compare(data, groupColumn, input_var, input_mod, input_pct = "percent")
 }
 \arguments{
-\item{groupColumn}{}
+\item{data}{Report-level data.}
+
+\item{groupColumn}{Column containing the categories to display.}
+
+\item{input_var}{Column defining the groups being compared.}
+
+\item{input_mod}{Selected group values.}
+
+\item{input_pct}{Counts (niv or nb) or percentages within each group.}
+}
+\value{
+A Highcharter widget.
 }
 \description{
-Title
+Compare distributions across selected groups
 }

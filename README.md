@@ -1,32 +1,97 @@
+# SignalConso · L’observatoire
 
-<!-- README.md is generated from README.Rmd. Please edit that file -->
+Une application Shiny indépendante pour explorer les signalements de consommation : tendances, catégories, territoires et comparaison de profils. La refonte propose une interface responsive en français, des filtres communs à toutes les vues et un export CSV compatible Excel.
 
-# Visualisation des données issues de SignalConso
+**Sans source configurée, l’application affiche 18 000 signalements fictifs de 2023 à 2025.** Le mode démonstration est indiqué dans l’interface et dans les exports. Ces chiffres ne décrivent pas l’activité réelle de SignalConso.
 
-<!-- badges: start -->
+## Démarrer en local
 
-[![Lifecycle:
-experimental](https://img.shields.io/badge/lifecycle-experimental-orange.svg)](https://lifecycle.r-lib.org/articles/stages.html#experimental)
-<!-- badges: end -->
+Depuis la racine du dépôt, installer les dépendances dans R :
 
-L’objectif de ShinySignalConso est de fournir une plateforme interactive
-pour visualiser et comprendre les données associées à SignalConso en
-France. Cette application vise à faciliter l’accès et l’analyse des
-informations pertinentes pour les utilisateurs.
-
-## Code of Conduct
-
-Please note that the shinySignalConso project is released with a
-[Contributor Code of
-Conduct](https://contributor-covenant.org/version/2/1/CODE_OF_CONDUCT.html).
-By contributing to this project, you agree to abide by its terms.
-
-## Installation
-
-Vous pouvez installer une version de développement de ShinySignalConso
-depuis [GitHub](https://github.com/) avec :
-
-``` r
-# install.packages("devtools")
-devtools::install_github("pds023/shinySignalConso")
+```r
+install.packages(c("remotes", "pkgload"))
+remotes::install_deps(dependencies = NA)
 ```
+
+Puis lancer l’application :
+
+```r
+shiny::runApp(launch.browser = TRUE)
+```
+
+Ou depuis un terminal :
+
+```sh
+Rscript -e "shiny::runApp(launch.browser = TRUE)"
+```
+
+Aucun fichier `set_cfg.R`, compte S3 ou téléchargement de données n’est nécessaire pour la démonstration. Les packages `arrow` et `aws.s3` sont facultatifs et servent uniquement aux sources correspondantes. Cette version est prévue pour être lancée localement ; aucun déploiement n’a été effectué dans le cadre de la refonte.
+
+## Explorer
+
+- **Vue d’ensemble** : indicateurs, évolution quotidienne, hebdomadaire ou mensuelle, catégories, traitement et rythmes des signalements.
+- **Territoires** : carte et classement par région ou département. Les volumes ne sont pas rapportés à la population.
+- **Comparaisons** : de deux à cinq groupes, en nombre ou en pourcentage du total de chaque groupe.
+- **Données** : tableau consultable et export CSV en UTF-8, avec séparateur point-virgule.
+
+Choisir une période, des catégories et des territoires dans le panneau latéral, puis cliquer sur **Appliquer les filtres**. Les filtres avancés ajoutent départements, sous-catégories, étiquettes et traitement. **Réinitialiser** retrouve le périmètre complet. Le guide de lecture précise le sens et les limites des indicateurs.
+
+L’export comprend tout le périmètre des filtres appliqués ; la recherche textuelle du tableau ne réduit que son affichage.
+
+## Brancher les données réelles
+
+L’application conserve la prise en charge des fichiers SignalConso et d’une source S3, mais nécessite leur configuration explicite. Aucun accès à l’ancien stockage n’est tenté automatiquement.
+
+### Fichier local
+
+Dans R, avant de lancer l’application :
+
+```r
+Sys.setenv(SIGNALCONSO_DATA = "/chemin/vers/signalconso.csv")
+shiny::runApp()
+```
+
+Formats acceptés : CSV, RDS et Parquet. Pour Parquet, installer `arrow` avec `install.packages("arrow")`. Sous Windows, utiliser par exemple `C:/donnees/signalconso.csv`.
+
+Le tableau doit contenir `creationdate` ou `date`. Les dates sont acceptées au format `AAAA-MM-JJ`, avec heure facultative, ou `JJ/MM/AAAA`. Une date absente ou invalide déclenche un message d’erreur.
+
+Les colonnes d’analyse sont `category`, `subcategories`, `tags`, `status`, `dep_code`, `dep_name`, `reg_code`, `reg_name` et `signalement_traitement`. Les colonnes facultatives absentes sont indiquées comme « Non renseigné ». Les indicateurs historiques `signalement_transmis`, `signalement_lu` et `signalement_reponse` sont également pris en charge pour reconstruire le traitement. Les codes de département, dont `01` et `2A`, sont conservés comme texte.
+
+### Objet S3
+
+```r
+install.packages(c("aws.s3", "arrow"))
+Sys.unsetenv("SIGNALCONSO_DATA")
+Sys.setenv(
+  SIGNALCONSO_S3_BUCKET = "mon-bucket",
+  SIGNALCONSO_S3_OBJECT = "dossier/signalconso.parquet"
+)
+shiny::runApp()
+```
+
+Configurer séparément les identifiants AWS selon le mécanisme habituel de `aws.s3`, sans les inscrire dans le code ni les versionner. L’objet par défaut est `signalconso.parquet` ; les objets CSV et RDS sont également acceptés.
+
+La priorité des sources est : **fichier local → S3 → démonstration**. Une source configurée mais indisponible affiche une erreur et n’est jamais remplacée silencieusement par des données fictives. Pour retrouver la démonstration, retirer `SIGNALCONSO_DATA` et `SIGNALCONSO_S3_BUCKET`, puis relancer l’application.
+
+### Préparer un fichier
+
+```r
+pkgload::load_all()
+preprocess_data("signalconso.csv", output = "signalconso.rds")
+```
+
+Le prétraitement harmonise dates, libellés et codes géographiques, conserve le fichier source et n’envoie rien sur S3. `output` est facultatif : sans ce paramètre, la fonction renvoie simplement le tableau préparé. `maj_data()` permet un téléchargement explicite ; les données sont validées avant le remplacement du fichier destination.
+
+## Vérifications
+
+Depuis la racine du dépôt :
+
+```sh
+Rscript tests/data-checks.R
+Rscript tests/chart-checks.R
+Rscript tests/server-checks.R
+```
+
+Ces scripts vérifient notamment le chargement, les dates invalides, la stabilité de la démonstration, la conservation des fichiers sources, les agrégations, les pourcentages et les filtres du serveur. Ils ne nécessitent pas de connexion S3.
+
+Projet indépendant de l’administration et du service officiel [SignalConso](https://signal.conso.gouv.fr). Code sous [licence MIT](LICENSE.md). Données réelles : [jeu SignalConso sur data.gouv.fr](https://www.data.gouv.fr/datasets/signalconso).

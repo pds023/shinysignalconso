@@ -1,14 +1,14 @@
 
 
-#' Title
+#' Render a table with column visibility controls
 #'
-#' @param data
-#' @param length
-#'
-#' @return
+#' @param data A data frame to display.
+#' @param length Number of rows to display on each page.
+#' @param cols_names Optional vector of column labels.
+#' @param select_cols Whether to start with a restricted set of visible columns.
+#' @return A Shiny render function for a DT output.
+#' @importFrom DT renderDT
 #' @export
-#'
-#' @examples
 create_dt <- function(data,length = 5,cols_names = NULL,select_cols = FALSE) {
   if(select_cols){
     initial_visibility <- c(TRUE, TRUE, rep(FALSE, length(colnames(data)) - 2))

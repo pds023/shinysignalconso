@@ -2,13 +2,19 @@
 % Please edit documentation in R/preprocess_data.R
 \name{preprocess_data}
 \alias{preprocess_data}
-\title{Title}
+\title{Préparer un fichier SignalConso}
 \usage{
-preprocess_data(file = "signalconso.csv")
+preprocess_data(file = "signalconso.csv", output = NULL)
 }
 \arguments{
-\item{file}{}
+\item{file}{Chemin du fichier source.}
+
+\item{output}{Chemin facultatif d'un fichier .rds, .csv ou .parquet à créer.}
+}
+\value{
+Un data.table normalisé.
 }
 \description{
-Title
+Lit un fichier CSV, RDS ou Parquet et normalise les colonnes d'analyse.
+Le fichier source est conservé. Aucune donnée n'est envoyée sur un serveur.
 }
