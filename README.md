@@ -1,4 +1,6 @@
-# SignalConso · L’observatoire
+# SignalConso · L’observatoire de la consommation
+
+![Identité SignalConso](inst/app/www/connect-thumbnail.svg)
 
 Une application Shiny indépendante pour explorer les signalements de consommation : tendances, catégories, territoires et comparaison de profils. La refonte propose une interface responsive en français, des filtres communs à toutes les vues et un export CSV compatible Excel.
 
@@ -25,7 +27,7 @@ Ou depuis un terminal :
 Rscript -e "shiny::runApp(launch.browser = TRUE)"
 ```
 
-Aucun fichier `set_cfg.R`, compte S3 ou téléchargement de données n’est nécessaire pour la démonstration. Les packages `arrow` et `aws.s3` sont facultatifs et servent uniquement aux sources correspondantes. Cette version est prévue pour être lancée localement ; aucun déploiement n’a été effectué dans le cadre de la refonte.
+Aucun fichier `set_cfg.R`, compte S3 ou téléchargement de données n’est nécessaire pour la démonstration. Les packages `arrow` et `aws.s3` sont facultatifs en local et servent uniquement aux sources correspondantes. Le dépôt contient également le manifeste de déploiement Posit Connect ; aucun déploiement n’a été effectué.
 
 ## Explorer
 
@@ -81,6 +83,56 @@ preprocess_data("signalconso.csv", output = "signalconso.rds")
 ```
 
 Le prétraitement harmonise dates, libellés et codes géographiques, conserve le fichier source et n’envoie rien sur S3. `output` est facultatif : sans ce paramètre, la fonction renvoie simplement le tableau préparé. `maj_data()` permet un téléchargement explicite ; les données sont validées avant le remplacement du fichier destination.
+
+## Déployer sur Posit Connect
+
+Le fichier `manifest.json` décrit les fichiers de l’application et les versions exactes de ses dépendances. Il a été généré avec `rsconnect::writeManifest()`, pour une application Shiny dont le point d’entrée est `app.R`.
+
+Le lanceur charge le package depuis les sources du bundle, puis appelle explicitement son export :
+
+```r
+pkgload::load_all(export_all = FALSE, helpers = FALSE, attach_testthat = FALSE)
+options(golem.app.prod = TRUE)
+getExportedValue("shinySignalConso", "run_app")()
+```
+
+L’application n’a donc pas à être installée comme un package externe sur Connect.
+
+Après une modification des fichiers de l’application ou des dépendances, régénérer le manifeste depuis la racine :
+
+```r
+install.packages(c("rsconnect", "pkgload", "arrow", "aws.s3"))
+source("dev/write_manifest.R", encoding = "UTF-8")
+```
+
+```sh
+Rscript tests/deployment-checks.R
+```
+
+Le manifeste inclut les dépendances Parquet/S3 pour permettre le raccordement des données réelles. Les bibliothèques locales, caches, tests, anciens paramètres de déploiement et fichiers de secrets sont exclus. Le manifeste actuel a été généré sous **R 4.6.1** : vérifier les versions disponibles sur le serveur et, si nécessaire, le régénérer avec la version de R utilisée sur Connect.
+
+Pour un déploiement depuis Git :
+
+1. Commiter et pousser les sources, les ressources et `manifest.json`.
+2. Dans Connect, choisir **Publish → Import from Git**, puis sélectionner le dépôt, la branche et le manifeste à la racine.
+3. Renseigner le titre ci-dessous. Dans **Settings → General**, ajouter la description et téléverser la vignette.
+4. Configurer la source des données dans les variables d’environnement du contenu Connect. Un chemin local doit être accessible **sur le serveur** ; pour S3, utiliser les paramètres `SIGNALCONSO_S3_*` documentés plus haut et les accès AWS autorisés sur le serveur.
+
+Le dépôt ne publie rien automatiquement. Sans configuration de données, Connect affichera le même mode démonstration clairement signalé.
+
+### Titre, description et identité
+
+**Titre :** SignalConso · L’observatoire de la consommation
+
+**Description :** Explorez les signalements de consommation par période, catégorie et territoire. Un observatoire indépendant pour suivre les tendances, comparer les profils et télécharger les données.
+
+- **Logo vectoriel :** [logo.svg](inst/app/www/logo.svg), utilisé dans l’interface et comme favicon.
+- **Vignette du catalogue Connect :** [connect-thumbnail.svg](inst/app/www/connect-thumbnail.svg), au format 1200 × 630.
+- **Textes de l’application :** `app_title` et `app_description` dans [inst/golem-config.yml](inst/golem-config.yml).
+
+Le logo associe une bulle de dialogue aux barres d’un graphique, dans le vert profond de l’observatoire. Il s’agit de l’identité de ce projet indépendant.
+
+Connect gère le titre, la description et la miniature comme des **paramètres du contenu**, séparément du manifeste. La présence du logo dans le dépôt ne définit pas automatiquement la miniature du catalogue. Voir les [paramètres de contenu Connect](https://docs.posit.co/connect/user/content-settings/) et la [documentation du manifeste](https://rstudio.github.io/rsconnect/reference/writeManifest.html).
 
 ## Vérifications
 

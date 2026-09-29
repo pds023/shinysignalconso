@@ -35,7 +35,7 @@ chart_theme <- function(chart) {
       exporting = list(chartMenuLabel = "Options du graphique", menuButtonLabel = "Ouvrir les options, {chartTitle}")))
   chart$x$hc_opts$accessibility <- list(point = list(valueDecimals = 1))
   chart <- highcharter::hc_add_dependency(chart, "modules/accessibility.js")
-  resources <- system.file("app", "www", package = "shinySignalConso")
+  resources <- if (exists("app_sys", mode = "function")) app_sys("app", "www") else ""
   if (!nzchar(resources)) resources <- file.path("inst", "app", "www")
   chart$dependencies <- c(chart$dependencies, list(htmltools::htmlDependency(
     "signalconso-highcharts-accessibility", "0.1.0", src = c(file = normalizePath(resources)),
@@ -109,7 +109,7 @@ graph_territory <- function(data, level = "region") {
   level <- match.arg(level, c("region", "department"))
   if (is.null(data) || !nrow(data)) return(NULL)
   file <- if (level == "region") "fr-regions.geo.json" else "fr-departments.geo.json"
-  path <- system.file("app", "www", "maps", file, package = "shinySignalConso")
+  path <- if (exists("app_sys", mode = "function")) app_sys("app", "www", "maps", file) else ""
   if (!nzchar(path)) path <- file.path("inst", "app", "www", "maps", file)
   if (!file.exists(path)) stop("Le fond de carte local est introuvable. Réinstallez les fichiers de l’application.")
   map <- jsonlite::fromJSON(path, simplifyVector = FALSE)

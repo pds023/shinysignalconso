@@ -3,7 +3,7 @@
 #' @noRd
 app_ui <- function(request) {
   bslib::page_sidebar(
-    title = NULL, window_title = "SignalConso · L'observatoire", lang = "fr",
+    title = NULL, window_title = get_golem_config("app_title"), lang = "fr",
     theme = bslib::bs_theme(version = 5, bg = "#f5f7f9", fg = "#192c36", primary = "#087f73",
       base_font = "Segoe UI, Arial, sans-serif", border_radius = "0.75rem",
       "grid-breakpoints" = "(xs: 0, sm: 900px, md: 992px, lg: 1200px, xl: 1400px, xxl: 1600px)"),
@@ -32,7 +32,11 @@ app_ui <- function(request) {
 #' @noRd
 golem_add_external_resources <- function() {
   golem::add_resource_path("www", app_sys("app/www"))
-  tags$head(tags$link(rel = "icon", href = "www/favicon.ico"),
+  tags$head(tags$link(rel = "icon", href = "www/logo.svg", type = "image/svg+xml"),
     tags$link(rel = "stylesheet", href = "www/styles.css"),
-    tags$meta(name = "description", content = "Explorez les signalements SignalConso par période, catégorie et territoire."))
+    tags$meta(name = "application-name", content = "SignalConso"),
+    tags$meta(name = "theme-color", content = "#087f73"),
+    tags$meta(name = "description", content = get_golem_config("app_description")),
+    tags$meta(property = "og:title", content = get_golem_config("app_title")),
+    tags$meta(property = "og:description", content = get_golem_config("app_description")))
 }

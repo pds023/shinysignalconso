@@ -1,7 +1,7 @@
 # Data sources are explicit: a local file, an S3 object, or a labelled demo.
 
 signalconso_territories <- function() {
-  path <- system.file("extdata", "territories.csv", package = "shinySignalConso")
+  path <- if (exists("app_sys", mode = "function")) app_sys("extdata", "territories.csv") else ""
   if (!nzchar(path)) path <- file.path("inst", "extdata", "territories.csv")
   if (!file.exists(path)) return(NULL)
   data.table::fread(path, colClasses = "character", encoding = "UTF-8")

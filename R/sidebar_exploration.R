@@ -5,7 +5,7 @@ sidebar_exploration <- function() {
   bslib::sidebar(
     id = "filters_sidebar", width = 282, open = list(desktop = "open", mobile = "closed"),
     title = "Votre exploration",
-    div(class = "sidebar-brand", span(class = "brand-symbol", bsicons::bs_icon("bar-chart-line-fill")),
+    div(class = "sidebar-brand", tags$img(src = "www/logo.svg", alt = "", class = "brand-logo", width = 42, height = 42),
       div(strong("SignalConso"), span("L’OBSERVATOIRE"))),
     div(class = "sidebar-intro", h2("Votre exploration"), p("Affinez votre regard sur les données.")),
     dateRangeInput("filter_dates", "Période", start = NULL, end = NULL,

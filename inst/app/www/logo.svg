@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="256" height="256" viewBox="0 0 256 256" role="img" aria-labelledby="title desc">
+  <title id="title">SignalConso — L’observatoire</title>
+  <desc id="desc">Une bulle de dialogue blanche avec trois barres sur un carré vert profond.</desc>
+  <rect width="256" height="256" rx="62" fill="#087f73"/>
+  <path d="M77 48h102c17 0 31 14 31 31v80c0 17-14 31-31 31H98l-38 27v-44c-9-6-14-16-14-28V79c0-17 14-31 31-31Z" fill="#fff"/>
+  <rect x="77" y="122" width="20" height="38" rx="5" fill="#087f73"/>
+  <rect x="112" y="99" width="20" height="61" rx="5" fill="#087f73"/>
+  <rect x="147" y="76" width="20" height="84" rx="5" fill="#087f73"/>
+</svg>

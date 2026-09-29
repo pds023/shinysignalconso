@@ -1,10 +1,11 @@
 Package: shinySignalConso
-Title: Shiny Signal Conso
+Title: SignalConso - L'Observatoire de la Consommation
 Version: 0.1.0
 Authors@R: 
     person("Philippe", "Fontaine", , "philippe.fontaine.ds@proton.me", role = c("cre", "aut"))
-Description: Data visualisation des données de SignalConso disponibles sur
-    data.gouv.
+Description: Un observatoire indépendant pour explorer les signalements de
+    consommation par période, catégorie et territoire, suivre les tendances,
+    comparer les profils et télécharger les données issues de SignalConso.
 License: MIT + file LICENSE
 URL: https://github.com/pds023/shinysignalconso
 BugReports: https://github.com/pds023/shinysignalconso/issues
@@ -25,6 +26,7 @@ Suggests:
     arrow,
     aws.s3,
     pkgload,
+    rsconnect,
     testthat
 Encoding: UTF-8
 LazyData: true

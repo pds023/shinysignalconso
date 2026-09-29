@@ -14,7 +14,7 @@ button,a,input,select,summary{touch-action:manipulation}
 .bslib-sidebar-layout>.main{padding:0!important;overflow:visible}
 #main-content{max-width:1800px;margin:0 auto;padding:0 38px 24px}
 .sidebar-brand{display:flex;align-items:center;gap:11px;margin-bottom:43px}
-.brand-symbol{display:flex;align-items:center;justify-content:center;width:42px;height:42px;border-radius:12px;background:var(--teal);color:#fff;font-size:22px}
+.brand-logo{display:block;width:42px;height:42px;flex-shrink:0}
 .sidebar-brand strong{display:block;font-size:22px;letter-spacing:-.8px;font-weight:750}
 .sidebar-brand div>span{font-size:9px;font-weight:700;letter-spacing:2.2px;color:var(--muted)}
 .sidebar-intro h2{font-size:16px;font-weight:700;margin-bottom:7px}

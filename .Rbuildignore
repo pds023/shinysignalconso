@@ -12,3 +12,7 @@ $run_dev.*
 ^rsconnect$
 ^\.r-library$
 ^\.local$
+^manifest\.json$
+^\.rscignore$
+^renv$
+^renv\.lock$
